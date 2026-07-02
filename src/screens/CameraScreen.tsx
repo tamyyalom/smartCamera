@@ -1,7 +1,33 @@
-import React from 'react';
-import {Pressable, StyleSheet, Text, View} from 'react-native';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import {useIsFocused} from '@react-navigation/native';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import {
+  Camera,
+  type CameraRef,
+  useCameraDevice,
+  usePhotoOutput,
+  useVideoOutput,
+  type Recorder,
+} from 'react-native-vision-camera';
+import {CameraControlsPanel} from '../components/camera/CameraControlsPanel';
 import {getSceneProfile} from '../config/scenes';
+import {useCameraPermissions} from '../hooks/useCameraPermissions';
+import {saveMediaFile} from '../services/media';
+import {useAppStore} from '../stores/useAppStore';
 import type {RootStackScreenProps} from '../types/navigation';
+
+const DEFAULT_MIN_ZOOM = 1;
+const DEFAULT_MAX_ZOOM = 10;
+const DEFAULT_MIN_EXPOSURE = -2;
+const DEFAULT_MAX_EXPOSURE = 2;
 
 export function CameraScreen({
   navigation,
@@ -10,29 +36,289 @@ export function CameraScreen({
   const {sceneId, mode} = route.params;
   const scene = getSceneProfile(sceneId);
   const modeLabel = mode === 'video' ? 'הקלטה' : 'צילום';
+  const isFocused = useIsFocused();
+  const updateCameraState = useAppStore(state => state.updateCameraState);
+
+  const {hasAllPermissions, requestAll} = useCameraPermissions(mode === 'video');
+  const device = useCameraDevice('back');
+  const photoOutput = usePhotoOutput();
+  const videoOutput = useVideoOutput({enableAudio: mode === 'video'});
+
+  const cameraRef = useRef<CameraRef>(null);
+  const recorderRef = useRef<Recorder | null>(null);
+  const recordingStartedAt = useRef(0);
+
+  const [zoom, setZoom] = useState(1);
+  const [exposure, setExposure] = useState(0);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isCapturing, setIsCapturing] = useState(false);
+  const [showControls, setShowControls] = useState(false);
+  const [limits, setLimits] = useState({
+    minZoom: DEFAULT_MIN_ZOOM,
+    maxZoom: DEFAULT_MAX_ZOOM,
+    minExposure: DEFAULT_MIN_EXPOSURE,
+    maxExposure: DEFAULT_MAX_EXPOSURE,
+    supportsExposure: true,
+  });
+
+  const outputs = useMemo(
+    () => (mode === 'video' ? [videoOutput, photoOutput] : [photoOutput]),
+    [mode, photoOutput, videoOutput],
+  );
+
+  const syncLimitsFromController = useCallback(() => {
+    const controller = cameraRef.current?.controller;
+    if (!controller) {
+      return;
+    }
+    const dev = controller.device;
+    setLimits({
+      minZoom: controller.minZoom ?? dev.minZoom ?? DEFAULT_MIN_ZOOM,
+      maxZoom: controller.maxZoom ?? dev.maxZoom ?? DEFAULT_MAX_ZOOM,
+      minExposure: dev.minExposureBias ?? DEFAULT_MIN_EXPOSURE,
+      maxExposure: dev.maxExposureBias ?? DEFAULT_MAX_EXPOSURE,
+      supportsExposure: dev.supportsExposureBias ?? true,
+    });
+    setZoom(current => {
+      const clamped = Math.min(
+        controller.maxZoom ?? DEFAULT_MAX_ZOOM,
+        Math.max(controller.minZoom ?? DEFAULT_MIN_ZOOM, current),
+      );
+      return clamped;
+    });
+  }, []);
+
+  useEffect(() => {
+    updateCameraState({zoom, exposure});
+  }, [zoom, exposure, updateCameraState]);
+
+  const handleZoomChange = (value: number) => {
+    setZoom(value);
+    cameraRef.current?.controller?.setZoom(value).catch(() => {});
+  };
+
+  const handleExposureChange = (value: number) => {
+    setExposure(value);
+    cameraRef.current?.controller?.setExposureBias(value).catch(() => {});
+  };
+
+  const handleReset = () => {
+    const neutralZoom = limits.minZoom;
+    setZoom(neutralZoom);
+    setExposure(0);
+    cameraRef.current?.controller?.setZoom(neutralZoom).catch(() => {});
+    cameraRef.current?.controller?.setExposureBias(0).catch(() => {});
+    cameraRef.current?.resetFocus().catch(() => {});
+  };
+
+  const takePhoto = async () => {
+    if (isCapturing) {
+      return;
+    }
+    setIsCapturing(true);
+    try {
+      const photoFile = await photoOutput.capturePhotoToFile({}, {});
+      await saveMediaFile({
+        type: 'photo',
+        sourceUri: photoFile.filePath,
+      });
+      Alert.alert('נשמר', 'התמונה נשמרה בהצלחה');
+    } catch (error) {
+      Alert.alert(
+        'שגיאה',
+        error instanceof Error ? error.message : 'צילום נכשל',
+      );
+    } finally {
+      setIsCapturing(false);
+    }
+  };
+
+  const startRecording = async () => {
+    if (isRecording || recorderRef.current) {
+      return;
+    }
+    try {
+      const recorder = await videoOutput.createRecorder({});
+      recorderRef.current = recorder;
+      recordingStartedAt.current = Date.now();
+
+      await recorder.startRecording(
+        async filePath => {
+          const durationMs = Date.now() - recordingStartedAt.current;
+          setIsRecording(false);
+          recorderRef.current = null;
+          try {
+            await saveMediaFile({
+              type: 'video',
+              sourceUri: filePath,
+              durationMs,
+            });
+            Alert.alert('נשמר', 'ההקלטה נשמרה בהצלחה');
+          } catch (error) {
+            Alert.alert(
+              'שגיאה',
+              error instanceof Error ? error.message : 'שמירה נכשלה',
+            );
+          }
+        },
+        error => {
+          setIsRecording(false);
+          recorderRef.current = null;
+          Alert.alert('שגיאה', error.message);
+        },
+      );
+      setIsRecording(true);
+    } catch (error) {
+      recorderRef.current = null;
+      Alert.alert(
+        'שגיאה',
+        error instanceof Error ? error.message : 'הקלטה נכשלה',
+      );
+    }
+  };
+
+  const stopRecording = async () => {
+    if (!recorderRef.current) {
+      return;
+    }
+    try {
+      await recorderRef.current.stopRecording();
+    } catch (error) {
+      setIsRecording(false);
+      recorderRef.current = null;
+      Alert.alert(
+        'שגיאה',
+        error instanceof Error ? error.message : 'עצירה נכשלה',
+      );
+    }
+  };
+
+  const handleShutter = () => {
+    if (mode === 'photo') {
+      takePhoto();
+      return;
+    }
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  };
+
+  if (!hasAllPermissions) {
+    return (
+      <SafeAreaView style={styles.permissionContainer}>
+        <Text style={styles.permissionTitle}>נדרשת הרשאת מצלמה</Text>
+        <Text style={styles.permissionText}>
+          {mode === 'video'
+            ? 'לאפליקציה נדרשות הרשאות מצלמה ומיקרופון לצילום והקלטה.'
+            : 'לאפליקציה נדרשת הרשאת מצלמה לצילום.'}
+        </Text>
+        <Pressable style={styles.permissionBtn} onPress={requestAll}>
+          <Text style={styles.permissionBtnText}>אפשר גישה</Text>
+        </Pressable>
+        <Pressable onPress={() => navigation.goBack()}>
+          <Text style={styles.backLink}>חזרה</Text>
+        </Pressable>
+      </SafeAreaView>
+    );
+  }
+
+  if (!device) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="#ffffff" />
+        <Text style={styles.loadingText}>טוען מצלמה...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      <View style={styles.previewPlaceholder}>
-        <Text style={styles.previewText}>Camera Preview</Text>
-        <Text style={styles.previewSubtext}>
-          react-native-vision-camera — שלב 1
-        </Text>
-      </View>
+      <Camera
+        ref={cameraRef}
+        style={StyleSheet.absoluteFill}
+        device={device}
+        isActive={isFocused && hasAllPermissions}
+        outputs={outputs}
+        zoom={zoom}
+        exposure={exposure}
+        enableNativeTapToFocusGesture
+        onStarted={syncLimitsFromController}
+      />
 
-      <View style={styles.overlay}>
-        <Text style={styles.sceneBadge}>{scene?.name_he ?? sceneId}</Text>
-        <Text style={styles.modeBadge}>{modeLabel}</Text>
-      </View>
+      <SafeAreaView style={styles.overlay} edges={['top', 'bottom']}>
+        <View style={styles.topBar}>
+          <Pressable onPress={() => navigation.goBack()}>
+            <Text style={styles.backText}>← חזרה</Text>
+          </Pressable>
+          <View style={styles.badges}>
+            <Text style={styles.sceneBadge}>{scene?.name_he ?? sceneId}</Text>
+            <Text style={styles.modeBadge}>{modeLabel}</Text>
+          </View>
+          <Pressable onPress={() => setShowControls(v => !v)}>
+            <Text style={styles.settingsText}>
+              {showControls ? 'הסתר' : 'הגדרות'}
+            </Text>
+          </Pressable>
+        </View>
 
-      <View style={styles.controls}>
-        <Pressable
-          style={styles.backButton}
-          onPress={() => navigation.popToTop()}>
-          <Text style={styles.backText}>חזרה לבית</Text>
-        </Pressable>
-        <View style={styles.shutter} />
-      </View>
+        {showControls && (
+          <View style={styles.controlsPanelWrap}>
+            <CameraControlsPanel
+              zoom={zoom}
+              minZoom={limits.minZoom}
+              maxZoom={limits.maxZoom}
+              exposure={exposure}
+              minExposure={limits.minExposure}
+              maxExposure={limits.maxExposure}
+              supportsExposure={limits.supportsExposure}
+              onZoomChange={handleZoomChange}
+              onExposureChange={handleExposureChange}
+              onReset={handleReset}
+            />
+            <Text style={styles.focusHint}>הקש על המסך למיקוד</Text>
+          </View>
+        )}
+
+        <View style={styles.bottomBar}>
+          {isRecording && (
+            <View style={styles.recordingBadge}>
+              <View style={styles.recordingDot} />
+              <Text style={styles.recordingText}>מקליט</Text>
+            </View>
+          )}
+
+          <Pressable
+            style={[
+              styles.shutter,
+              mode === 'video' && isRecording && styles.shutterRecording,
+              (isCapturing || (mode === 'video' && isRecording)) &&
+                styles.shutterActive,
+            ]}
+            onPress={handleShutter}
+            disabled={isCapturing}>
+            {isCapturing ? (
+              <ActivityIndicator color="#ffffff" />
+            ) : (
+              <View
+                style={[
+                  styles.shutterInner,
+                  mode === 'video' && isRecording && styles.shutterInnerSquare,
+                ]}
+              />
+            )}
+          </Pressable>
+
+          <Text style={styles.shutterHint}>
+            {mode === 'photo'
+              ? 'לחץ לצילום'
+              : isRecording
+                ? 'לחץ לעצירה'
+                : 'לחץ להקלטה'}
+          </Text>
+        </View>
+      </SafeAreaView>
     </View>
   );
 }
@@ -42,69 +328,168 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000000',
   },
-  previewPlaceholder: {
+  center: {
     flex: 1,
+    backgroundColor: '#000000',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#1e293b',
+    gap: 12,
   },
-  previewText: {
-    color: '#ffffff',
-    fontSize: 20,
-    fontWeight: '600',
-  },
-  previewSubtext: {
+  loadingText: {
     color: '#94a3b8',
-    fontSize: 14,
-    marginTop: 8,
     writingDirection: 'rtl',
   },
   overlay: {
-    position: 'absolute',
-    top: 56,
-    left: 16,
-    right: 16,
-    flexDirection: 'row-reverse',
+    ...StyleSheet.absoluteFill,
     justifyContent: 'space-between',
+  },
+  topBar: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 8,
+  },
+  backText: {
+    color: '#ffffff',
+    fontSize: 16,
+    writingDirection: 'rtl',
+  },
+  settingsText: {
+    color: '#60a5fa',
+    fontSize: 14,
+    fontWeight: '600',
+    writingDirection: 'rtl',
+  },
+  badges: {
+    flexDirection: 'row-reverse',
+    gap: 8,
   },
   sceneBadge: {
     backgroundColor: 'rgba(15, 23, 42, 0.75)',
     color: '#ffffff',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     borderRadius: 8,
     overflow: 'hidden',
+    fontSize: 13,
     writingDirection: 'rtl',
   },
   modeBadge: {
     backgroundColor: 'rgba(37, 99, 235, 0.85)',
     color: '#ffffff',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     borderRadius: 8,
     overflow: 'hidden',
+    fontSize: 13,
     writingDirection: 'rtl',
   },
-  controls: {
-    padding: 24,
-    paddingBottom: 40,
-    alignItems: 'center',
-    gap: 16,
+  controlsPanelWrap: {
+    paddingHorizontal: 16,
+    gap: 8,
   },
-  backButton: {
-    paddingVertical: 8,
-  },
-  backText: {
+  focusHint: {
     color: '#94a3b8',
-    fontSize: 16,
+    fontSize: 12,
+    textAlign: 'center',
+    writingDirection: 'rtl',
+  },
+  bottomBar: {
+    alignItems: 'center',
+    paddingBottom: 16,
+    gap: 10,
+  },
+  recordingBadge: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(220, 38, 38, 0.85)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  recordingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#ffffff',
+  },
+  recordingText: {
+    color: '#ffffff',
+    fontWeight: '600',
     writingDirection: 'rtl',
   },
   shutter: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 76,
+    height: 76,
+    borderRadius: 38,
     borderWidth: 4,
     borderColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.2)',
+  },
+  shutterRecording: {
+    borderColor: '#ef4444',
+  },
+  shutterActive: {
+    opacity: 0.85,
+  },
+  shutterInner: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
     backgroundColor: '#ef4444',
+  },
+  shutterInnerSquare: {
+    width: 28,
+    height: 28,
+    borderRadius: 6,
+  },
+  shutterHint: {
+    color: '#94a3b8',
+    fontSize: 13,
+    writingDirection: 'rtl',
+  },
+  permissionContainer: {
+    flex: 1,
+    backgroundColor: '#0f172a',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 32,
+    gap: 16,
+  },
+  permissionTitle: {
+    color: '#ffffff',
+    fontSize: 22,
+    fontWeight: '700',
+    writingDirection: 'rtl',
+  },
+  permissionText: {
+    color: '#94a3b8',
+    fontSize: 15,
+    textAlign: 'center',
+    lineHeight: 24,
+    writingDirection: 'rtl',
+  },
+  permissionBtn: {
+    backgroundColor: '#2563eb',
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: 12,
+    marginTop: 8,
+  },
+  permissionBtnText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+    writingDirection: 'rtl',
+  },
+  backLink: {
+    color: '#60a5fa',
+    fontSize: 15,
+    marginTop: 8,
+    writingDirection: 'rtl',
   },
 });
