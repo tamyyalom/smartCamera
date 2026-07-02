@@ -6,6 +6,8 @@ export type RootStackParamList = {
   SceneSelect: {mode: 'photo' | 'video'};
   TripodConnect: {sceneId: string; mode: 'photo' | 'video'};
   Camera: {sceneId: string; mode: 'photo' | 'video'};
+  MediaPreview: {fileId: string};
+  Edit: {fileId: string};
 };
 
 export type RootStackScreenProps<T extends keyof RootStackParamList> =

@@ -1,22 +1,39 @@
 import React, {useEffect} from 'react';
 import {ActivityIndicator, StyleSheet, Text, View} from 'react-native';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import {ensureMediaDirectory} from '../services/media';
 import type {RootStackScreenProps} from '../types/navigation';
 
 export function SplashScreen({navigation}: RootStackScreenProps<'Splash'>) {
   useEffect(() => {
-    const timer = setTimeout(() => {
-      navigation.replace('Home');
-    }, 1200);
+    let active = true;
 
-    return () => clearTimeout(timer);
+    const bootstrap = async () => {
+      await ensureMediaDirectory();
+      await new Promise<void>(resolve => setTimeout(resolve, 1200));
+      if (active) {
+        navigation.replace('Home');
+      }
+    };
+
+    bootstrap();
+
+    return () => {
+      active = false;
+    };
   }, [navigation]);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>SmartCamera</Text>
-      <Text style={styles.subtitle}>מצלמה חכמה עם חצובה ממונעת</Text>
-      <ActivityIndicator size="large" color="#ffffff" style={styles.loader} />
-    </View>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.content}>
+        <View style={styles.logoCircle}>
+          <Text style={styles.logoText}>SC</Text>
+        </View>
+        <Text style={styles.title}>SmartCamera</Text>
+        <Text style={styles.subtitle}>מצלמה חכמה עם חצובה ממונעת</Text>
+        <ActivityIndicator size="large" color="#60a5fa" style={styles.loader} />
+      </View>
+    </SafeAreaView>
   );
 }
 
@@ -24,9 +41,26 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#0f172a',
+  },
+  content: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
+  },
+  logoCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#2563eb',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  logoText: {
+    color: '#ffffff',
+    fontSize: 24,
+    fontWeight: '800',
   },
   title: {
     fontSize: 36,
