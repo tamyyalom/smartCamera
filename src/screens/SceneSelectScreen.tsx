@@ -65,8 +65,9 @@ export function SceneSelectScreen({
     navigation.navigate('TripodConnect', {sceneId: selectedId, mode: activeMode});
   };
 
-  const renderItem = ({item}: {item: SceneProfile}) => (
+  const renderItem = ({item, index}: {item: SceneProfile; index: number}) => (
     <SceneCard
+      testID={`sceneSelect.scene.${index}`}
       scene={item}
       selected={item.id === selectedId}
       onPress={() => handleSelect(item.id)}
@@ -75,12 +76,14 @@ export function SceneSelectScreen({
 
   return (
     <FlowScreenLayout
+      testID="sceneSelect.screen"
       step={2}
       title="בחירת סצנה"
       subtitle={subtitle}
       onBack={() => navigation.goBack()}
       footer={
         <Pressable
+          testID="sceneSelect.continue"
           style={[styles.continueButton, !selectedId && styles.continueDisabled]}
           disabled={!selectedId}
           onPress={onContinue}>

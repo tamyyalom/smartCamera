@@ -56,6 +56,7 @@ export function TripodConnectScreen({
 
   return (
     <FlowScreenLayout
+      testID="tripodConnect.screen"
       step={3}
       title="חיבור לחצובה"
       subtitle={`${scene?.name_he ?? sceneId} · סריקת BLE`}
@@ -111,7 +112,7 @@ export function TripodConnectScreen({
           )}
 
           {!isConnected ? (
-            <Pressable onPress={skipWithoutTripod}>
+            <Pressable testID="tripodConnect.skip" onPress={skipWithoutTripod}>
               <Text style={styles.skipText}>דלג — המשך בלי חצובה</Text>
             </Pressable>
           ) : null}

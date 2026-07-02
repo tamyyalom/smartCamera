@@ -6,15 +6,17 @@ interface SceneCardProps {
   scene: SceneProfile;
   selected: boolean;
   onPress: () => void;
+  testID?: string;
 }
 
-export function SceneCard({scene, selected, onPress}: SceneCardProps) {
+export function SceneCard({scene, selected, onPress, testID}: SceneCardProps) {
   const typeLabel = scene.type === 'video' ? 'וידאו' : 'סטילס';
   const zoomLabel = `${scene.framing.zoom_range[0]}×–${scene.framing.zoom_range[1]}×`;
   const primaryHint = scene.guidance_hints[0];
 
   return (
     <Pressable
+      testID={testID}
       style={[styles.card, selected && styles.cardSelected]}
       onPress={onPress}>
       <View style={styles.headerRow}>

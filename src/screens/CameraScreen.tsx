@@ -209,7 +209,7 @@ export function CameraScreen({
 
   if (!hasAllPermissions) {
     return (
-      <SafeAreaView style={styles.permissionContainer}>
+      <SafeAreaView testID="camera.screen" style={styles.permissionContainer}>
         <Text style={styles.permissionTitle}>נדרשת הרשאת מצלמה</Text>
         <Text style={styles.permissionText}>
           {mode === 'video'
@@ -228,7 +228,7 @@ export function CameraScreen({
 
   if (cameraStatus === 'loading') {
     return (
-      <View style={styles.center}>
+      <View testID="camera.screen" style={styles.center}>
         <ActivityIndicator size="large" color="#ffffff" />
         <Text style={styles.loadingText}>טוען מצלמה...</Text>
       </View>
@@ -236,11 +236,16 @@ export function CameraScreen({
   }
 
   if (cameraStatus === 'unavailable' || !device) {
-    return <CameraUnavailableView onBack={() => navigation.goBack()} />;
+    return (
+      <CameraUnavailableView
+        testID="camera.screen"
+        onBack={() => navigation.goBack()}
+      />
+    );
   }
 
   return (
-    <View style={styles.container}>
+    <View testID="camera.screen" style={styles.container}>
       <Camera
         ref={cameraRef}
         style={StyleSheet.absoluteFill}

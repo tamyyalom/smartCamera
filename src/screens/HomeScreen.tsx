@@ -94,7 +94,7 @@ export function HomeScreen({navigation}: RootStackScreenProps<'Home'>) {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView testID="home.screen" style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <Text style={styles.title}>SmartCamera</Text>
         <Text style={styles.subtitle}>שלב 1 — בחרי פעולה להתחלה</Text>
@@ -104,6 +104,7 @@ export function HomeScreen({navigation}: RootStackScreenProps<'Home'>) {
 
       <View style={styles.actions}>
         <Pressable
+          testID="home.startVideo"
           style={({pressed}) => [
             styles.button,
             styles.primary,
@@ -114,6 +115,7 @@ export function HomeScreen({navigation}: RootStackScreenProps<'Home'>) {
         </Pressable>
 
         <Pressable
+          testID="home.startPhoto"
           style={({pressed}) => [
             styles.button,
             styles.secondary,

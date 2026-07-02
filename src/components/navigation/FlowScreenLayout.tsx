@@ -10,6 +10,7 @@ interface FlowScreenLayoutProps {
   onBack: () => void;
   children: React.ReactNode;
   footer?: React.ReactNode;
+  testID?: string;
 }
 
 export function FlowScreenLayout({
@@ -19,9 +20,13 @@ export function FlowScreenLayout({
   onBack,
   children,
   footer,
+  testID,
 }: FlowScreenLayoutProps) {
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+    <SafeAreaView
+      testID={testID}
+      style={styles.container}
+      edges={['top', 'bottom']}>
       <FlowProgress currentStep={step} />
 
       <View style={styles.header}>

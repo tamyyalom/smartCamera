@@ -4,11 +4,12 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 
 interface CameraUnavailableViewProps {
   onBack: () => void;
+  testID?: string;
 }
 
-export function CameraUnavailableView({onBack}: CameraUnavailableViewProps) {
+export function CameraUnavailableView({onBack, testID}: CameraUnavailableViewProps) {
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView testID={testID} style={styles.container}>
       <View style={styles.content}>
         <Text style={styles.icon}>📷</Text>
         <Text style={styles.title}>לא נמצאה מצלמה</Text>
