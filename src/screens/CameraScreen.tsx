@@ -18,6 +18,7 @@ import {useFaceDetector} from '@noma4i/vision-camera-face-detector';
 import {CameraControlsPanel} from '../components/camera/CameraControlsPanel';
 import {CameraUnavailableView} from '../components/camera/CameraUnavailableView';
 import {FaceGuideBanner} from '../components/camera/FaceGuideBanner';
+import {AIGuidanceBanner} from '../components/camera/AIGuidanceBanner';
 import {PhotoCaptureControls} from '../components/camera/PhotoCaptureControls';
 import {RecordingControls} from '../components/camera/RecordingControls';
 import {FlowProgress} from '../components/navigation/FlowProgress';
@@ -25,6 +26,7 @@ import {getSceneProfile} from '../config/scenes';
 import {useCameraDeviceStatus} from '../hooks/useCameraDeviceStatus';
 import {useCameraPermissions} from '../hooks/useCameraPermissions';
 import {usePhotoCapture} from '../hooks/usePhotoCapture';
+import {useAIPipeline} from '../hooks/useAIPipeline';
 import {useVideoRecorder} from '../hooks/useVideoRecorder';
 import {sceneUsesFaceGuide} from '../services/ai';
 import {useAppStore} from '../stores/useAppStore';
@@ -129,10 +131,20 @@ export function CameraScreen({
     });
   }, [enableFaceGuide, face.result, face.status, updateTrackingState]);
 
-  const handleZoomChange = (value: number) => {
+  const handleZoomChange = useCallback((value: number) => {
     setZoom(value);
     cameraRef.current?.controller?.setZoom(value).catch(() => {});
-  };
+  }, [cameraRef]);
+
+  const aiPipeline = useAIPipeline({
+    sceneId,
+    enabled:
+      isFocused &&
+      hasAllPermissions &&
+      cameraStatus === 'ready' &&
+      !!device,
+    onZoomChange: handleZoomChange,
+  });
 
   const handleExposureChange = (value: number) => {
     setExposure(value);
@@ -289,6 +301,11 @@ export function CameraScreen({
           enabled={enableFaceGuide}
           status={face.status}
           faceCount={face.result.faces.length}
+        />
+
+        <AIGuidanceBanner
+          text={aiPipeline.guidanceText}
+          isThinking={aiPipeline.isThinking}
         />
 
         {showControls && (
