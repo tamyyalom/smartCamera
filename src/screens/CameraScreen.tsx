@@ -19,6 +19,7 @@ import {CameraControlsPanel} from '../components/camera/CameraControlsPanel';
 import {CameraUnavailableView} from '../components/camera/CameraUnavailableView';
 import {PhotoCaptureControls} from '../components/camera/PhotoCaptureControls';
 import {RecordingControls} from '../components/camera/RecordingControls';
+import {FlowProgress} from '../components/navigation/FlowProgress';
 import {getSceneProfile} from '../config/scenes';
 import {useCameraDeviceStatus} from '../hooks/useCameraDeviceStatus';
 import {useCameraPermissions} from '../hooks/useCameraPermissions';
@@ -41,6 +42,7 @@ export function CameraScreen({
   const modeLabel = mode === 'video' ? 'הקלטה' : 'צילום';
   const isFocused = useIsFocused();
   const updateCameraState = useAppStore(state => state.updateCameraState);
+  const resetSession = useAppStore(state => state.resetSession);
 
   const {hasAllPermissions, requestAll} = useCameraPermissions(mode === 'video');
   const {status: cameraStatus, device} = useCameraDeviceStatus();
@@ -68,27 +70,32 @@ export function CameraScreen({
     [mode, photoOutput, videoOutput],
   );
 
+  const sceneZoomRange = scene?.framing.zoom_range;
+
   const syncLimitsFromController = useCallback(() => {
     const controller = cameraRef.current?.controller;
     if (!controller) {
       return;
     }
     const dev = controller.device;
+    const deviceMin = controller.minZoom ?? dev.minZoom ?? DEFAULT_MIN_ZOOM;
+    const deviceMax = controller.maxZoom ?? dev.maxZoom ?? DEFAULT_MAX_ZOOM;
+    const profileMin = sceneZoomRange?.[0] ?? deviceMin;
+    const profileMax = sceneZoomRange?.[1] ?? deviceMax;
+    const minZoom = Math.max(deviceMin, profileMin);
+    const maxZoom = Math.min(deviceMax, profileMax);
+    const initialZoom = Math.min(maxZoom, Math.max(minZoom, profileMin));
+
     setLimits({
-      minZoom: controller.minZoom ?? dev.minZoom ?? DEFAULT_MIN_ZOOM,
-      maxZoom: controller.maxZoom ?? dev.maxZoom ?? DEFAULT_MAX_ZOOM,
+      minZoom,
+      maxZoom,
       minExposure: dev.minExposureBias ?? DEFAULT_MIN_EXPOSURE,
       maxExposure: dev.maxExposureBias ?? DEFAULT_MAX_EXPOSURE,
       supportsExposure: dev.supportsExposureBias ?? true,
     });
-    setZoom(current => {
-      const clamped = Math.min(
-        controller.maxZoom ?? DEFAULT_MAX_ZOOM,
-        Math.max(controller.minZoom ?? DEFAULT_MIN_ZOOM, current),
-      );
-      return clamped;
-    });
-  }, []);
+    setZoom(initialZoom);
+    cameraRef.current?.controller?.setZoom(initialZoom).catch(() => {});
+  }, [sceneZoomRange]);
 
   useEffect(() => {
     updateCameraState({zoom, exposure});
@@ -115,6 +122,11 @@ export function CameraScreen({
 
   const takePhoto = photoCapture.capture;
 
+  const exitCamera = useCallback(() => {
+    resetSession();
+    navigation.popToTop();
+  }, [navigation, resetSession]);
+
   const handleBack = () => {
     if (mode === 'video' && recorder.isActive) {
       Alert.alert('הקלטה פעילה', 'לעצור או לבטל את ההקלטה לפני יציאה?', [
@@ -139,6 +151,33 @@ export function CameraScreen({
     }
     navigation.goBack();
   };
+
+  const handleFinish = () => {
+    if (mode === 'video' && recorder.isActive) {
+      Alert.alert('הקלטה פעילה', 'לעצור או לבטל את ההקלטה לפני סיום?', [
+        {text: 'המשך הקלטה', style: 'cancel'},
+        {
+          text: 'בטל הקלטה',
+          style: 'destructive',
+          onPress: async () => {
+            await recorder.cancel();
+            exitCamera();
+          },
+        },
+        {
+          text: 'שמור וסיים',
+          onPress: async () => {
+            await recorder.stop();
+            exitCamera();
+          },
+        },
+      ]);
+      return;
+    }
+    exitCamera();
+  };
+
+  const guidanceHint = scene?.guidance_hints[0];
 
   if (!hasAllPermissions) {
     return (
@@ -187,6 +226,10 @@ export function CameraScreen({
       />
 
       <SafeAreaView style={styles.overlay} edges={['top', 'bottom']}>
+        <View style={styles.flowBar}>
+          <FlowProgress currentStep={4} variant="dark" />
+        </View>
+
         <View style={styles.topBar}>
           <Pressable onPress={handleBack}>
             <Text style={styles.backText}>← חזרה</Text>
@@ -195,12 +238,16 @@ export function CameraScreen({
             <Text style={styles.sceneBadge}>{scene?.name_he ?? sceneId}</Text>
             <Text style={styles.modeBadge}>{modeLabel}</Text>
           </View>
-          <Pressable onPress={() => setShowControls(v => !v)}>
-            <Text style={styles.settingsText}>
-              {showControls ? 'הסתר' : 'הגדרות'}
-            </Text>
+          <Pressable onPress={handleFinish}>
+            <Text style={styles.finishText}>סיום</Text>
           </Pressable>
         </View>
+
+        {guidanceHint ? (
+          <View style={styles.hintBar}>
+            <Text style={styles.hintText}>💡 {guidanceHint}</Text>
+          </View>
+        ) : null}
 
         {showControls && (
           <View style={styles.controlsPanelWrap}>
@@ -219,6 +266,14 @@ export function CameraScreen({
             <Text style={styles.focusHint}>הקש על המסך למיקוד</Text>
           </View>
         )}
+
+        <Pressable
+          style={styles.settingsToggle}
+          onPress={() => setShowControls(v => !v)}>
+          <Text style={styles.settingsText}>
+            {showControls ? 'הסתר הגדרות' : 'הגדרות מצלמה'}
+          </Text>
+        </Pressable>
 
         <View style={styles.bottomBar}>
           {mode === 'video' ? (
@@ -265,6 +320,12 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFill,
     justifyContent: 'space-between',
   },
+  flowBar: {
+    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+    borderRadius: 12,
+    marginHorizontal: 12,
+    marginTop: 4,
+  },
   topBar: {
     flexDirection: 'row-reverse',
     alignItems: 'center',
@@ -276,6 +337,31 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     writingDirection: 'rtl',
+  },
+  finishText: {
+    color: '#4ade80',
+    fontSize: 14,
+    fontWeight: '700',
+    writingDirection: 'rtl',
+  },
+  hintBar: {
+    marginHorizontal: 16,
+    marginTop: 8,
+    backgroundColor: 'rgba(15, 23, 42, 0.75)',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  hintText: {
+    color: '#e2e8f0',
+    fontSize: 13,
+    textAlign: 'right',
+    writingDirection: 'rtl',
+  },
+  settingsToggle: {
+    alignSelf: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
   },
   settingsText: {
     color: '#60a5fa',

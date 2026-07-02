@@ -6,6 +6,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import {FlowScreenLayout} from '../components/navigation/FlowScreenLayout';
 import {getScenesForMode} from '../config/scenes';
 import {useAppStore} from '../stores/useAppStore';
 import type {RootStackScreenProps} from '../types/navigation';
@@ -21,6 +22,10 @@ export function SceneSelectScreen({
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const title = mode === 'video' ? 'בחירת סצנת וידאו' : 'בחירת סצנת צילום';
+  const subtitle =
+    mode === 'video'
+      ? 'בחרי סצנה שמתאימה לסוג ההקלטה'
+      : 'בחרי סצנה שמתאימה לסוג הצילום';
 
   const onContinue = () => {
     if (!selectedId) {
@@ -43,39 +48,31 @@ export function SceneSelectScreen({
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>{title}</Text>
+    <FlowScreenLayout
+      step={2}
+      title={title}
+      subtitle={subtitle}
+      onBack={() => navigation.goBack()}
+      footer={
+        <Pressable
+          style={[styles.continueButton, !selectedId && styles.continueDisabled]}
+          disabled={!selectedId}
+          onPress={onContinue}>
+          <Text style={styles.continueText}>המשך לחיבור חצובה</Text>
+        </Pressable>
+      }>
       <FlatList
         data={scenes}
         keyExtractor={item => item.id}
         renderItem={renderItem}
         contentContainerStyle={styles.list}
+        showsVerticalScrollIndicator={false}
       />
-      <Pressable
-        style={[styles.continueButton, !selectedId && styles.continueDisabled]}
-        disabled={!selectedId}
-        onPress={onContinue}>
-        <Text style={styles.continueText}>המשך</Text>
-      </Pressable>
-    </View>
+    </FlowScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-    paddingTop: 16,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#0f172a',
-    paddingHorizontal: 20,
-    marginBottom: 12,
-    textAlign: 'right',
-    writingDirection: 'rtl',
-  },
   list: {
     paddingHorizontal: 16,
     paddingBottom: 16,
@@ -107,7 +104,6 @@ const styles = StyleSheet.create({
     writingDirection: 'rtl',
   },
   continueButton: {
-    margin: 16,
     backgroundColor: '#2563eb',
     borderRadius: 14,
     paddingVertical: 16,

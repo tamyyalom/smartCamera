@@ -1,4 +1,4 @@
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useMemo, useState} from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -10,9 +10,17 @@ import {
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {MediaFileRow} from '../components/MediaFileRow';
-import {useMediaLibrary} from '../hooks/useMediaLibrary';
+import {FlowProgress} from '../components/navigation/FlowProgress';
+import {useMediaLibrary, type MediaFilter} from '../hooks/useMediaLibrary';
+import {useAppStore} from '../stores/useAppStore';
 import type {RootStackScreenProps} from '../types/navigation';
 import type {MediaFile} from '../types/media';
+
+const FILTERS: {id: MediaFilter; label: string}[] = [
+  {id: 'all', label: 'הכל'},
+  {id: 'photo', label: 'תמונות'},
+  {id: 'video', label: 'וידאו'},
+];
 
 function ListSeparator() {
   return <View style={styles.separator} />;
@@ -20,7 +28,25 @@ function ListSeparator() {
 
 export function HomeScreen({navigation}: RootStackScreenProps<'Home'>) {
   const {files, loading, error, refresh, remove} = useMediaLibrary();
+  const resetSession = useAppStore(state => state.resetSession);
   const [refreshing, setRefreshing] = useState(false);
+  const [filter, setFilter] = useState<MediaFilter>('all');
+
+  const filteredFiles = useMemo(() => {
+    if (filter === 'all') {
+      return files;
+    }
+    return files.filter(file => file.type === filter);
+  }, [files, filter]);
+
+  const photoCount = useMemo(
+    () => files.filter(file => file.type === 'photo').length,
+    [files],
+  );
+  const videoCount = useMemo(
+    () => files.filter(file => file.type === 'video').length,
+    [files],
+  );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -28,16 +54,17 @@ export function HomeScreen({navigation}: RootStackScreenProps<'Home'>) {
     setRefreshing(false);
   }, [refresh]);
 
+  const startFlow = (mode: 'photo' | 'video') => {
+    resetSession();
+    navigation.navigate('SceneSelect', {mode});
+  };
+
   const handleView = (file: MediaFile) => {
     navigation.navigate('MediaPreview', {fileId: file.id});
   };
 
   const handleEdit = (file: MediaFile) => {
     navigation.navigate('Edit', {fileId: file.id});
-  };
-
-  const handleDelete = async (id: string) => {
-    await remove(id);
   };
 
   const renderEmpty = () => {
@@ -49,9 +76,16 @@ export function HomeScreen({navigation}: RootStackScreenProps<'Home'>) {
       );
     }
 
+    const emptyLabel =
+      filter === 'photo'
+        ? 'אין עדיין תמונות'
+        : filter === 'video'
+          ? 'אין עדיין הקלטות'
+          : 'אין עדיין קבצים';
+
     return (
       <View style={styles.emptyWrap}>
-        <Text style={styles.emptyTitle}>אין עדיין קבצים</Text>
+        <Text style={styles.emptyTitle}>{emptyLabel}</Text>
         <Text style={styles.emptyText}>
           תמונות והקלטות שישמרו מהמצלמה יופיעו כאן
         </Text>
@@ -63,8 +97,10 @@ export function HomeScreen({navigation}: RootStackScreenProps<'Home'>) {
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <Text style={styles.title}>SmartCamera</Text>
-        <Text style={styles.subtitle}>בחרי פעולה להתחלה</Text>
+        <Text style={styles.subtitle}>שלב 1 — בחרי פעולה להתחלה</Text>
       </View>
+
+      <FlowProgress currentStep={1} />
 
       <View style={styles.actions}>
         <Pressable
@@ -73,7 +109,7 @@ export function HomeScreen({navigation}: RootStackScreenProps<'Home'>) {
             styles.primary,
             pressed && styles.pressed,
           ]}
-          onPress={() => navigation.navigate('SceneSelect', {mode: 'video'})}>
+          onPress={() => startFlow('video')}>
           <Text style={styles.buttonText}>התחל הקלטה</Text>
         </Pressable>
 
@@ -83,34 +119,53 @@ export function HomeScreen({navigation}: RootStackScreenProps<'Home'>) {
             styles.secondary,
             pressed && styles.pressed,
           ]}
-          onPress={() => navigation.navigate('SceneSelect', {mode: 'photo'})}>
+          onPress={() => startFlow('photo')}>
           <Text style={styles.buttonTextDark}>התחל צילום</Text>
         </Pressable>
       </View>
 
       <View style={styles.listHeader}>
-        <Text style={styles.filesTitle}>קבצים אחרונים</Text>
+        <Text style={styles.filesTitle}>קבצים מקומיים</Text>
         {files.length > 0 && (
-          <Text style={styles.filesCount}>{files.length} קבצים</Text>
+          <Text style={styles.filesCount}>
+            {photoCount} תמונות · {videoCount} וידאו
+          </Text>
         )}
+      </View>
+
+      <View style={styles.filters}>
+        {FILTERS.map(item => {
+          const active = filter === item.id;
+          return (
+            <Pressable
+              key={item.id}
+              style={[styles.filterChip, active && styles.filterChipActive]}
+              onPress={() => setFilter(item.id)}>
+              <Text
+                style={[styles.filterText, active && styles.filterTextActive]}>
+                {item.label}
+              </Text>
+            </Pressable>
+          );
+        })}
       </View>
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
       <FlatList
-        data={files}
+        data={filteredFiles}
         keyExtractor={item => item.id}
         renderItem={({item}) => (
           <MediaFileRow
             file={item}
             onView={handleView}
             onEdit={handleEdit}
-            onDeleted={handleDelete}
+            onDeleted={remove}
           />
         )}
         contentContainerStyle={[
           styles.listContent,
-          files.length === 0 && styles.listContentEmpty,
+          filteredFiles.length === 0 && styles.listContentEmpty,
         ]}
         ItemSeparatorComponent={ListSeparator}
         ListEmptyComponent={renderEmpty}
@@ -147,7 +202,7 @@ const styles = StyleSheet.create({
   },
   actions: {
     paddingHorizontal: 24,
-    paddingTop: 24,
+    paddingTop: 16,
     gap: 12,
   },
   button: {
@@ -182,8 +237,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 24,
-    paddingTop: 28,
-    paddingBottom: 12,
+    paddingTop: 24,
+    paddingBottom: 8,
   },
   filesTitle: {
     fontSize: 18,
@@ -192,9 +247,33 @@ const styles = StyleSheet.create({
     writingDirection: 'rtl',
   },
   filesCount: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#64748b',
     writingDirection: 'rtl',
+  },
+  filters: {
+    flexDirection: 'row-reverse',
+    gap: 8,
+    paddingHorizontal: 24,
+    paddingBottom: 12,
+  },
+  filterChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#e2e8f0',
+  },
+  filterChipActive: {
+    backgroundColor: '#2563eb',
+  },
+  filterText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#475569',
+    writingDirection: 'rtl',
+  },
+  filterTextActive: {
+    color: '#ffffff',
   },
   listContent: {
     paddingHorizontal: 24,

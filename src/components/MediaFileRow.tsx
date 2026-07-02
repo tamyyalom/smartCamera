@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 import ShareLib from 'react-native-share';
+import {VideoThumbnail} from './media/VideoThumbnail';
 import {
   formatDuration,
   formatMediaDate,
@@ -21,7 +22,7 @@ interface MediaFileRowProps {
   file: MediaFile;
   onView: (file: MediaFile) => void;
   onEdit: (file: MediaFile) => void;
-  onDeleted: (id: string) => void;
+  onDeleted: (id: string) => Promise<string | null>;
 }
 
 export function MediaFileRow({file, onView, onEdit, onDeleted}: MediaFileRowProps) {
@@ -48,7 +49,12 @@ export function MediaFileRow({file, onView, onEdit, onDeleted}: MediaFileRowProp
       {
         text: 'מחק',
         style: 'destructive',
-        onPress: () => onDeleted(file.id),
+        onPress: async () => {
+          const deleteError = await onDeleted(file.id);
+          if (deleteError) {
+            Alert.alert('שגיאה', deleteError);
+          }
+        },
       },
     ]);
   };
@@ -64,9 +70,7 @@ export function MediaFileRow({file, onView, onEdit, onDeleted}: MediaFileRowProp
               resizeMode="cover"
             />
           ) : (
-            <View style={styles.videoThumb}>
-              <Text style={styles.videoIcon}>▶</Text>
-            </View>
+            <VideoThumbnail uri={file.uri} durationLabel={duration ?? undefined} />
           )}
         </View>
 
@@ -135,16 +139,6 @@ const styles = StyleSheet.create({
   thumbnail: {
     width: '100%',
     height: '100%',
-  },
-  videoThumb: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#1e293b',
-  },
-  videoIcon: {
-    color: '#ffffff',
-    fontSize: 18,
   },
   info: {
     flex: 1,

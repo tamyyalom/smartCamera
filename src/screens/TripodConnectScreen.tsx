@@ -6,6 +6,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import {FlowScreenLayout} from '../components/navigation/FlowScreenLayout';
 import {getSceneProfile} from '../config/scenes';
 import {mockTripodController} from '../services/tripod';
 import {useAppStore} from '../stores/useAppStore';
@@ -23,6 +24,10 @@ export function TripodConnectScreen({
     'idle',
   );
   const [error, setError] = useState<string | null>(null);
+
+  const continueToCamera = () => {
+    navigation.navigate('Camera', {sceneId, mode});
+  };
 
   const connect = async () => {
     setStatus('scanning');
@@ -42,71 +47,73 @@ export function TripodConnectScreen({
     }
   };
 
-  const continueToCamera = () => {
-    navigation.navigate('Camera', {sceneId, mode});
+  const skipWithoutTripod = () => {
+    setTripodConnected(false);
+    continueToCamera();
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>חיבור לחצובה</Text>
-      <Text style={styles.sceneName}>{scene?.name_he ?? sceneId}</Text>
+    <FlowScreenLayout
+      step={3}
+      title="חיבור לחצובה"
+      subtitle={scene?.name_he ?? sceneId}
+      onBack={() => navigation.goBack()}
+      footer={
+        <>
+          {status !== 'connected' ? (
+            <Pressable
+              style={({pressed}) => [styles.button, pressed && styles.pressed]}
+              onPress={connect}
+              disabled={status === 'scanning'}>
+              {status === 'scanning' ? (
+                <ActivityIndicator color="#ffffff" />
+              ) : (
+                <Text style={styles.buttonText}>סרוק וחבר (Mock)</Text>
+              )}
+            </Pressable>
+          ) : (
+            <Pressable
+              style={({pressed}) => [styles.button, pressed && styles.pressed]}
+              onPress={continueToCamera}>
+              <Text style={styles.buttonText}>המשך לצילום</Text>
+            </Pressable>
+          )}
 
-      <View style={styles.statusCard}>
-        <Text style={styles.statusLabel}>סטטוס</Text>
-        <Text style={styles.statusValue}>
-          {status === 'idle' && 'ממתין לחיבור'}
-          {status === 'scanning' && 'מחפש חצובה...'}
-          {status === 'connected' && 'מחובר ✓ (Mock)'}
-          {status === 'error' && `שגיאה: ${error}`}
+          {status !== 'connected' ? (
+            <Pressable onPress={skipWithoutTripod}>
+              <Text style={styles.skipText}>דלג — המשך בלי חצובה</Text>
+            </Pressable>
+          ) : null}
+
+          <Text style={styles.note}>
+            מצב Mock — יוחלף במודול native (BLE/WiFi) בשלב 2
+          </Text>
+        </>
+      }>
+      <View style={styles.content}>
+        <View style={styles.statusCard}>
+          <Text style={styles.statusLabel}>סטטוס חיבור</Text>
+          <Text style={styles.statusValue}>
+            {status === 'idle' && 'ממתין לחיבור'}
+            {status === 'scanning' && 'מחפש חצובה...'}
+            {status === 'connected' && 'מחובר ✓ (Mock)'}
+            {status === 'error' && `שגיאה: ${error}`}
+          </Text>
+        </View>
+
+        <Text style={styles.hint}>
+          ניתן לדלג על שלב זה ולהמשיך ישירות למצלמה. חיבור חצובה אמיתי יתווסף
+          בשלב 2.
         </Text>
-        {status === 'scanning' && (
-          <ActivityIndicator color="#2563eb" style={styles.loader} />
-        )}
       </View>
-
-      {status !== 'connected' ? (
-        <Pressable
-          style={({pressed}) => [styles.button, pressed && styles.pressed]}
-          onPress={connect}
-          disabled={status === 'scanning'}>
-          <Text style={styles.buttonText}>סרוק וחבר (Mock)</Text>
-        </Pressable>
-      ) : (
-        <Pressable
-          style={({pressed}) => [styles.button, pressed && styles.pressed]}
-          onPress={continueToCamera}>
-          <Text style={styles.buttonText}>המשך לצילום</Text>
-        </Pressable>
-      )}
-
-      <Text style={styles.note}>
-        מצב Mock — יוחלף במודול native (BLE/WiFi) בשלב 2
-      </Text>
-    </View>
+    </FlowScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-    padding: 24,
-    paddingTop: 16,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#0f172a',
-    textAlign: 'right',
-    writingDirection: 'rtl',
-  },
-  sceneName: {
-    fontSize: 16,
-    color: '#64748b',
-    marginTop: 4,
-    marginBottom: 24,
-    textAlign: 'right',
-    writingDirection: 'rtl',
+  content: {
+    paddingHorizontal: 20,
+    gap: 16,
   },
   statusCard: {
     backgroundColor: '#ffffff',
@@ -114,7 +121,6 @@ const styles = StyleSheet.create({
     padding: 16,
     borderWidth: 1,
     borderColor: '#e2e8f0',
-    marginBottom: 24,
   },
   statusLabel: {
     fontSize: 14,
@@ -130,14 +136,20 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     writingDirection: 'rtl',
   },
-  loader: {
-    marginTop: 12,
+  hint: {
+    fontSize: 14,
+    color: '#64748b',
+    lineHeight: 22,
+    textAlign: 'right',
+    writingDirection: 'rtl',
   },
   button: {
     backgroundColor: '#2563eb',
     borderRadius: 14,
     paddingVertical: 16,
     alignItems: 'center',
+    minHeight: 52,
+    justifyContent: 'center',
   },
   pressed: {
     opacity: 0.85,
@@ -148,8 +160,15 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     writingDirection: 'rtl',
   },
+  skipText: {
+    color: '#2563eb',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+    writingDirection: 'rtl',
+    paddingVertical: 8,
+  },
   note: {
-    marginTop: 16,
     fontSize: 13,
     color: '#94a3b8',
     textAlign: 'center',

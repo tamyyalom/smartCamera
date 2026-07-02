@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import ShareLib from 'react-native-share';
+import Video from 'react-native-video';
 import {
   formatDuration,
   formatMediaDate,
@@ -27,6 +28,7 @@ export function MediaPreviewScreen({
   const {fileId} = route.params;
   const [file, setFile] = useState<MediaFile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [videoError, setVideoError] = useState<string | null>(null);
 
   useEffect(() => {
     getMediaFile(fileId).then(result => {
@@ -86,14 +88,22 @@ export function MediaPreviewScreen({
         {file.type === 'photo' ? (
           <Image
             source={{uri: toFileUri(file.uri)}}
-            style={styles.image}
+            style={styles.media}
             resizeMode="contain"
           />
-        ) : (
-          <View style={styles.videoPlaceholder}>
-            <Text style={styles.videoIcon}>▶</Text>
-            <Text style={styles.videoHint}>נגן וידאו — יתווסף עם אינטגרציית המצלמה</Text>
+        ) : videoError ? (
+          <View style={styles.videoErrorWrap}>
+            <Text style={styles.videoErrorText}>{videoError}</Text>
           </View>
+        ) : (
+          <Video
+            source={{uri: toFileUri(file.uri)}}
+            style={styles.media}
+            resizeMode="contain"
+            controls
+            paused={false}
+            onError={() => setVideoError('לא ניתן לנגן את הוידאו')}
+          />
         )}
       </View>
 
@@ -143,21 +153,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 16,
   },
-  image: {
+  media: {
     width: '100%',
     height: '100%',
   },
-  videoPlaceholder: {
-    alignItems: 'center',
-    gap: 12,
+  videoErrorWrap: {
     padding: 24,
   },
-  videoIcon: {
-    fontSize: 48,
-    color: '#ffffff',
-  },
-  videoHint: {
-    color: '#94a3b8',
+  videoErrorText: {
+    color: '#fca5a5',
     textAlign: 'center',
     writingDirection: 'rtl',
     lineHeight: 22,
