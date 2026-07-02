@@ -39,6 +39,8 @@
 	<string>SmartCamera needs camera access for photo and video capture.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>SmartCamera needs microphone access for video recording.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>SmartCamera saves photos and videos to your gallery.</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

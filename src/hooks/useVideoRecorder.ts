@@ -2,7 +2,7 @@ import {useCallback, useEffect, useRef, useState} from 'react';
 import {Alert} from 'react-native';
 import type {CameraPhotoOutput} from 'react-native-vision-camera';
 import type {CameraVideoOutput, Recorder} from 'react-native-vision-camera';
-import {saveMediaFile} from '../services/media';
+import {captureSuccessMessage, persistCapture} from '../services/media';
 
 export type RecordingPhase = 'idle' | 'recording' | 'paused';
 
@@ -74,12 +74,15 @@ export function useVideoRecorder({
           );
           resetState();
           try {
-            await saveMediaFile({
+            const {savedToGallery} = await persistCapture({
               type: 'video',
               sourceUri: filePath,
               durationMs: durationMs > 0 ? durationMs : undefined,
             });
-            Alert.alert('נשמר', 'ההקלטה נשמרה בהצלחה');
+            Alert.alert(
+              'נשמר',
+              captureSuccessMessage('video', savedToGallery),
+            );
           } catch (error) {
             Alert.alert(
               'שגיאה',
@@ -204,11 +207,11 @@ export function useVideoRecorder({
     setIsBusy(true);
     try {
       const photoFile = await photoOutput.capturePhotoToFile({}, {});
-      await saveMediaFile({
+      const {savedToGallery} = await persistCapture({
         type: 'photo',
         sourceUri: photoFile.filePath,
       });
-      Alert.alert('נשמר', 'תמונת רגע נשמרה');
+      Alert.alert('נשמר', captureSuccessMessage('photo', savedToGallery));
     } catch (error) {
       Alert.alert(
         'שגיאה',

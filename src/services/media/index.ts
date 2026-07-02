@@ -9,3 +9,9 @@ export {
   saveMediaFile,
   toFileUri,
 } from './mediaStorage';
+export {ensureGalleryPermission, saveToGallery} from './galleryStorage';
+export {
+  captureSuccessMessage,
+  persistCapture,
+  type PersistCaptureResult,
+} from './persistCapture';

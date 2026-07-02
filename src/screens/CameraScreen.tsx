@@ -12,16 +12,18 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import {
   Camera,
   type CameraRef,
-  useCameraDevice,
   usePhotoOutput,
   useVideoOutput,
 } from 'react-native-vision-camera';
 import {CameraControlsPanel} from '../components/camera/CameraControlsPanel';
+import {CameraUnavailableView} from '../components/camera/CameraUnavailableView';
+import {PhotoCaptureControls} from '../components/camera/PhotoCaptureControls';
 import {RecordingControls} from '../components/camera/RecordingControls';
 import {getSceneProfile} from '../config/scenes';
+import {useCameraDeviceStatus} from '../hooks/useCameraDeviceStatus';
 import {useCameraPermissions} from '../hooks/useCameraPermissions';
+import {usePhotoCapture} from '../hooks/usePhotoCapture';
 import {useVideoRecorder} from '../hooks/useVideoRecorder';
-import {saveMediaFile} from '../services/media';
 import {useAppStore} from '../stores/useAppStore';
 import type {RootStackScreenProps} from '../types/navigation';
 
@@ -41,7 +43,7 @@ export function CameraScreen({
   const updateCameraState = useAppStore(state => state.updateCameraState);
 
   const {hasAllPermissions, requestAll} = useCameraPermissions(mode === 'video');
-  const device = useCameraDevice('back');
+  const {status: cameraStatus, device} = useCameraDeviceStatus();
   const photoOutput = usePhotoOutput();
   const videoOutput = useVideoOutput({enableAudio: mode === 'video'});
 
@@ -49,7 +51,6 @@ export function CameraScreen({
 
   const [zoom, setZoom] = useState(1);
   const [exposure, setExposure] = useState(0);
-  const [isCapturing, setIsCapturing] = useState(false);
   const [showControls, setShowControls] = useState(false);
   const [limits, setLimits] = useState({
     minZoom: DEFAULT_MIN_ZOOM,
@@ -60,6 +61,7 @@ export function CameraScreen({
   });
 
   const recorder = useVideoRecorder({videoOutput, photoOutput});
+  const photoCapture = usePhotoCapture(photoOutput);
 
   const outputs = useMemo(
     () => (mode === 'video' ? [videoOutput, photoOutput] : [photoOutput]),
@@ -111,27 +113,7 @@ export function CameraScreen({
     cameraRef.current?.resetFocus().catch(() => {});
   };
 
-  const takePhoto = async () => {
-    if (isCapturing) {
-      return;
-    }
-    setIsCapturing(true);
-    try {
-      const photoFile = await photoOutput.capturePhotoToFile({}, {});
-      await saveMediaFile({
-        type: 'photo',
-        sourceUri: photoFile.filePath,
-      });
-      Alert.alert('נשמר', 'התמונה נשמרה בהצלחה');
-    } catch (error) {
-      Alert.alert(
-        'שגיאה',
-        error instanceof Error ? error.message : 'צילום נכשל',
-      );
-    } finally {
-      setIsCapturing(false);
-    }
-  };
+  const takePhoto = photoCapture.capture;
 
   const handleBack = () => {
     if (mode === 'video' && recorder.isActive) {
@@ -177,13 +159,17 @@ export function CameraScreen({
     );
   }
 
-  if (!device) {
+  if (cameraStatus === 'loading') {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color="#ffffff" />
         <Text style={styles.loadingText}>טוען מצלמה...</Text>
       </View>
     );
+  }
+
+  if (cameraStatus === 'unavailable' || !device) {
+    return <CameraUnavailableView onBack={() => navigation.goBack()} />;
   }
 
   return (
@@ -248,19 +234,10 @@ export function CameraScreen({
               onSnapshot={recorder.takeSnapshot}
             />
           ) : (
-            <>
-              <Pressable
-                style={[styles.shutter, isCapturing && styles.shutterActive]}
-                onPress={takePhoto}
-                disabled={isCapturing}>
-                {isCapturing ? (
-                  <ActivityIndicator color="#ffffff" />
-                ) : (
-                  <View style={styles.shutterInner} />
-                )}
-              </Pressable>
-              <Text style={styles.shutterHint}>לחץ לצילום</Text>
-            </>
+            <PhotoCaptureControls
+              isCapturing={photoCapture.isCapturing}
+              onCapture={takePhoto}
+            />
           )}
         </View>
       </SafeAreaView>
@@ -344,30 +321,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: 16,
     gap: 10,
-  },
-  shutter: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    borderWidth: 4,
-    borderColor: '#ffffff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(0,0,0,0.2)',
-  },
-  shutterActive: {
-    opacity: 0.85,
-  },
-  shutterInner: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    backgroundColor: '#ef4444',
-  },
-  shutterHint: {
-    color: '#94a3b8',
-    fontSize: 13,
-    writingDirection: 'rtl',
   },
   permissionContainer: {
     flex: 1,
