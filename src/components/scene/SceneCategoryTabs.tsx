@@ -1,6 +1,5 @@
 import React from 'react';
 import {Pressable, StyleSheet, Text, View} from 'react-native';
-import type {SceneProfile} from '../../types/scene';
 
 interface SceneCategoryTabsProps {
   activeMode: 'photo' | 'video';
