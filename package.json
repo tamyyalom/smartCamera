@@ -10,6 +10,7 @@
     "test": "jest",
     "test:ci": "jest --ci --coverage --maxWorkers=2",
     "detox:build:ios": "detox build --configuration ios.sim.debug",
+    "predetox:test:ios": "command -v applesimutils >/dev/null || (echo 'Missing applesimutils. Install: brew tap wix/brew && brew install applesimutils' && exit 1)",
     "detox:test:ios": "detox test --configuration ios.sim.debug",
     "detox:build:android": "detox build --configuration android.emu.debug",
     "detox:test:android": "detox test --configuration android.emu.debug"
