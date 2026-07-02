@@ -1,0 +1,266 @@
+{
+  "version": "1.0.0",
+  "profiles": {
+    "video_broadcast": {
+      "id": "video_broadcast",
+      "type": "video",
+      "name_he": "שידור",
+      "name_en": "Broadcast",
+      "description_he": "צילום ישיר לרשתות — המלצה לעמוד במרכז, גובה עיניים, זום קל",
+      "ai_priority": ["stable_headroom", "eye_level", "face_centered", "even_lighting"],
+      "framing": {
+        "subject_position": "center",
+        "headroom_ratio": 0.12,
+        "zoom_range": [1.2, 2.5],
+        "preferred_speed": "slow"
+      },
+      "guidance_hints": ["מיקום במרכז", "גובה מצלמה בגובה העיניים", "תאורה אחידה"]
+    },
+    "video_interview": {
+      "id": "video_interview",
+      "type": "video",
+      "name_he": "ראיון",
+      "name_en": "Interview",
+      "description_he": "ראיון אישי — פריים רחב יותר, זווית קלאסית, יציבות לאורך זמן",
+      "ai_priority": ["stable_framing", "slight_angle", "quiet_movement"],
+      "framing": {
+        "subject_position": "rule_of_thirds",
+        "headroom_ratio": 0.15,
+        "zoom_range": [1.0, 2.0],
+        "preferred_speed": "documentary"
+      },
+      "guidance_hints": ["מסגור רחב יותר", "שמירה על קומפוזיציה אחידה"]
+    },
+    "video_tutorial": {
+      "id": "video_tutorial",
+      "type": "video",
+      "name_he": "הדרכה",
+      "name_en": "Tutorial",
+      "description_he": "הדרכה מעל שולחן — שמירה על גוף וידיים בפריים",
+      "ai_priority": ["keep_hands_in_frame", "moderate_zoom", "follow_gentle_motion"],
+      "framing": {
+        "subject_position": "center",
+        "headroom_ratio": 0.1,
+        "zoom_range": [1.0, 1.8],
+        "preferred_speed": "medium"
+      },
+      "guidance_hints": ["זום מעט רחב", "מרחק קבוע מהמצלמה"]
+    },
+    "video_presentation": {
+      "id": "video_presentation",
+      "type": "video",
+      "name_he": "מצגת",
+      "name_en": "Presentation",
+      "description_he": "מצגת על לוח/מסך — פריים רחב לדובר + תוכן",
+      "ai_priority": ["wide_frame", "include_board", "slow_pan"],
+      "framing": {
+        "subject_position": "left_third",
+        "headroom_ratio": 0.12,
+        "zoom_range": [1.0, 1.6],
+        "preferred_speed": "slow"
+      },
+      "guidance_hints": ["פריים רחב", "זווית קלה לכיוון הלוח"]
+    },
+    "video_demo": {
+      "id": "video_demo",
+      "type": "video",
+      "name_he": "הדגמה",
+      "name_en": "Demo",
+      "description_he": "הדגמת מוצר — מעבר בין פנים למוצר, זום דינמי",
+      "ai_priority": ["product_visibility", "balanced_light", "smooth_transitions"],
+      "framing": {
+        "subject_position": "flexible",
+        "headroom_ratio": 0.1,
+        "zoom_range": [1.2, 3.0],
+        "preferred_speed": "medium"
+      },
+      "guidance_hints": ["הדגשת המוצר", "תאורה מאוזנת לפרטים"]
+    },
+    "video_testimonial": {
+      "id": "video_testimonial",
+      "type": "video",
+      "name_he": "עדות",
+      "name_en": "Testimonial",
+      "description_he": "עדות אישית — קרוב, רגוע, מרכזי",
+      "ai_priority": ["emotional_framing", "stable_closeup", "soft_light"],
+      "framing": {
+        "subject_position": "center",
+        "headroom_ratio": 0.1,
+        "zoom_range": [1.5, 2.8],
+        "preferred_speed": "slow"
+      },
+      "guidance_hints": ["זום קרוב לפנים", "תאורה רכה ואחידה"]
+    },
+    "video_explainer": {
+      "id": "video_explainer",
+      "type": "video",
+      "name_he": "לוח-הסבר",
+      "name_en": "Explainer Board",
+      "description_he": "הסבר עם לוח/טקסט — פריים רחב, מעקב אחרי ידיים",
+      "ai_priority": ["include_board_and_hands", "wide_angle", "slow_tracking"],
+      "framing": {
+        "subject_position": "center",
+        "headroom_ratio": 0.12,
+        "zoom_range": [1.0, 1.7],
+        "preferred_speed": "slow"
+      },
+      "guidance_hints": ["פריים רחב", "ראות גם את הלוח"]
+    },
+    "video_announcement": {
+      "id": "video_announcement",
+      "type": "video",
+      "name_he": "הודעה",
+      "name_en": "Announcement",
+      "description_he": "הודעה קצרה — יציב, ברור, מהיר לייצור",
+      "ai_priority": ["stable_eye_level", "clear_light", "minimal_movement"],
+      "framing": {
+        "subject_position": "center",
+        "headroom_ratio": 0.08,
+        "zoom_range": [1.2, 2.0],
+        "preferred_speed": "fast"
+      },
+      "guidance_hints": ["מצלמה יציבה", "תאורה ברורה"]
+    },
+    "video_music": {
+      "id": "video_music",
+      "type": "video",
+      "name_he": "מוזיקה",
+      "name_en": "Music Performance",
+      "description_he": "ביצוע מוזיקלי — פריים רחב לכלי, מעט תנועה",
+      "ai_priority": ["include_instrument", "stable_zoom", "avoid_fast_pans"],
+      "framing": {
+        "subject_position": "center",
+        "headroom_ratio": 0.15,
+        "zoom_range": [1.0, 1.5],
+        "preferred_speed": "documentary"
+      },
+      "guidance_hints": ["פריים רחב לכלי נגינה", "ללא מעקבים מהירים"]
+    },
+    "still_portrait": {
+      "id": "still_portrait",
+      "type": "still",
+      "name_he": "פורטרט",
+      "name_en": "Portrait",
+      "description_he": "פורטרט אדם — תאורה, עיניים במרכז",
+      "ai_priority": ["eye_focus", "aesthetic_angle", "soft_light"],
+      "framing": {
+        "subject_position": "center",
+        "zoom_range": [1.5, 3.5],
+        "preferred_speed": "slow"
+      },
+      "guidance_hints": ["מיקום עיניים במרכז", "גובה מצלמה בגובה העיניים"]
+    },
+    "still_product": {
+      "id": "still_product",
+      "type": "still",
+      "name_he": "מוצר",
+      "name_en": "Product",
+      "description_he": "מוצר בודד — זווית ברורה, רקע נקי",
+      "ai_priority": ["product_shape", "sharp_focus", "clean_background"],
+      "framing": {
+        "subject_position": "center",
+        "zoom_range": [1.2, 4.0],
+        "preferred_speed": "slow"
+      },
+      "guidance_hints": ["זווית 45° או ישר", "רקע נקי"]
+    },
+    "still_food": {
+      "id": "still_food",
+      "type": "still",
+      "name_he": "אוכל",
+      "name_en": "Food",
+      "description_he": "צילום מזון — זווית 45°, צבעים חיים",
+      "ai_priority": ["appetizing_angle", "color_pop", "depth"],
+      "framing": {
+        "subject_position": "center",
+        "zoom_range": [1.2, 2.5],
+        "preferred_speed": "slow"
+      },
+      "guidance_hints": ["זווית 45°", "תאורה רכה מהצד"]
+    },
+    "still_macro": {
+      "id": "still_macro",
+      "type": "still",
+      "name_he": "תקריב",
+      "name_en": "Macro",
+      "description_he": "תקריב פרטים — פוקוס מדויק, תאורה אחידה",
+      "ai_priority": ["sharp_focus", "even_light", "minimal_shake"],
+      "framing": {
+        "subject_position": "center",
+        "zoom_range": [2.0, 8.0],
+        "preferred_speed": "slow"
+      },
+      "guidance_hints": ["פוקוס מדויק", "תאורה אחידה"]
+    },
+    "still_online": {
+      "id": "still_online",
+      "type": "still",
+      "name_he": "אונליין",
+      "name_en": "E-commerce",
+      "description_he": "מוצר לאונליין — רקע לבן, ניגודיות גבוהה",
+      "ai_priority": ["white_background", "consistent_light", "true_color"],
+      "framing": {
+        "subject_position": "center",
+        "zoom_range": [1.0, 3.0],
+        "preferred_speed": "slow"
+      },
+      "guidance_hints": ["רקע לבן", "תאורה אחידה משני צדדים"]
+    },
+    "still_studio": {
+      "id": "still_studio",
+      "type": "still",
+      "name_he": "סטודיו",
+      "name_en": "Studio",
+      "description_he": "סטודיו מקצועי — פריים מלא, תאורה מבוקרת",
+      "ai_priority": ["full_frame", "controlled_light", "professional_look"],
+      "framing": {
+        "subject_position": "center",
+        "zoom_range": [1.0, 2.5],
+        "preferred_speed": "slow"
+      },
+      "guidance_hints": ["פריים מלא", "תאורה מבוקרת"]
+    },
+    "still_interior": {
+      "id": "still_interior",
+      "type": "still",
+      "name_he": "חלל",
+      "name_en": "Interior",
+      "description_he": "חדר/סalon — קומפוזיציה רחבה, קווים ישרים",
+      "ai_priority": ["wide_composition", "straight_lines", "depth"],
+      "framing": {
+        "subject_position": "center",
+        "zoom_range": [1.0, 1.8],
+        "preferred_speed": "slow"
+      },
+      "guidance_hints": ["זווית מהגובה", "קווים ישרים"]
+    },
+    "still_group": {
+      "id": "still_group",
+      "type": "still",
+      "name_he": "קבוצה",
+      "name_en": "Group",
+      "description_he": "קבוצת אנשים — כולם בפריים, פריים רחב",
+      "ai_priority": ["everyone_in_frame", "symmetry", "even_focus"],
+      "framing": {
+        "subject_position": "center",
+        "zoom_range": [1.0, 1.6],
+        "preferred_speed": "slow"
+      },
+      "guidance_hints": ["פריים רחב", "כולם בפריים"]
+    },
+    "still_flat_lay": {
+      "id": "still_flat_lay",
+      "type": "still",
+      "name_he": "על-מבט",
+      "name_en": "Flat Lay",
+      "description_he": "Flat Lay — צילום מלמעלה, זווית ייחודית",
+      "ai_priority": ["top_down", "parallel_surface", "even_spacing"],
+      "framing": {
+        "subject_position": "center",
+        "zoom_range": [1.0, 2.0],
+        "preferred_speed": "slow"
+      },
+      "guidance_hints": ["צילום מלמעלה", "פריטים מסודרים"]
+    }
+  }
+}

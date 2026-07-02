@@ -1,0 +1,78 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://smartcamera.app/schemas/ai-request-payload.json",
+  "title": "SmartCamera AI Request Payload",
+  "description": "Unified input payload sent to the vision model each gated tick",
+  "type": "object",
+  "required": ["scene_id", "scene_profile", "state", "limits", "frame_meta"],
+  "additionalProperties": false,
+  "properties": {
+    "scene_id": {
+      "type": "string",
+      "description": "Active scene profile identifier"
+    },
+    "scene_profile": {
+      "type": "object",
+      "description": "Loaded scene profile subset relevant to the model"
+    },
+    "state": {
+      "type": "object",
+      "required": ["tripod", "camera", "timestamp_ms"],
+      "properties": {
+        "tripod": {
+          "type": "object",
+          "required": ["pan", "tilt", "height", "last_command_ms"],
+          "properties": {
+            "pan": { "type": "number" },
+            "tilt": { "type": "number" },
+            "height": { "type": "number" },
+            "last_command_ms": { "type": "number" }
+          }
+        },
+        "camera": {
+          "type": "object",
+          "required": ["zoom"],
+          "properties": {
+            "zoom": { "type": "number" },
+            "exposure": { "type": "number" },
+            "focus_distance": { "type": "number" }
+          }
+        },
+        "tracking": {
+          "type": "object",
+          "properties": {
+            "face_box": {
+              "type": "object",
+              "properties": {
+                "x": { "type": "number" },
+                "y": { "type": "number" },
+                "width": { "type": "number" },
+                "height": { "type": "number" }
+              }
+            },
+            "face_confidence": { "type": "number" },
+            "motion_score": { "type": "number" }
+          }
+        },
+        "timestamp_ms": { "type": "number" }
+      }
+    },
+    "limits": {
+      "type": "object",
+      "description": "Hardware and safety limits for clamping"
+    },
+    "frame_meta": {
+      "type": "object",
+      "required": ["width", "height", "format"],
+      "properties": {
+        "width": { "type": "integer" },
+        "height": { "type": "integer" },
+        "format": { "type": "string", "enum": ["jpeg", "png", "webp"] },
+        "base64": {
+          "type": "string",
+          "description": "Compressed frame data when sent inline"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,97 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://smartcamera.app/schemas/ai-response.json",
+  "title": "SmartCamera AI Response",
+  "description": "Fixed output contract for real-time filming decisions (see project spec §405–471)",
+  "type": "object",
+  "required": [
+    "apply",
+    "pan_delta",
+    "tilt_delta",
+    "height_delta",
+    "zoom_target",
+    "speed_profile",
+    "guidance_text",
+    "confidence",
+    "reason"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "apply": {
+      "type": "boolean",
+      "description": "Whether to execute hardware/camera adjustments this tick"
+    },
+    "pan_delta": {
+      "type": "number",
+      "minimum": -45,
+      "maximum": 45,
+      "description": "Horizontal rotation delta in degrees"
+    },
+    "tilt_delta": {
+      "type": "number",
+      "minimum": -30,
+      "maximum": 30,
+      "description": "Vertical tilt delta in degrees"
+    },
+    "height_delta": {
+      "type": "number",
+      "minimum": -20,
+      "maximum": 20,
+      "description": "Tripod height delta in centimeters"
+    },
+    "zoom_target": {
+      "type": "number",
+      "minimum": 1.0,
+      "maximum": 10.0,
+      "description": "Target camera zoom ratio"
+    },
+    "speed_profile": {
+      "type": "string",
+      "enum": ["slow", "medium", "fast", "documentary"],
+      "description": "Movement speed profile for tripod actuators"
+    },
+    "guidance_text": {
+      "type": "string",
+      "maxLength": 120,
+      "description": "Short user-facing guidance in session language (Hebrew by default)"
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Model confidence in this decision"
+    },
+    "reason": {
+      "type": "string",
+      "maxLength": 200,
+      "description": "Internal rationale for logging and debugging"
+    },
+    "focus_mode": {
+      "type": "string",
+      "enum": ["auto", "face", "center", "hold"],
+      "description": "Optional focus hint when camera API supports it"
+    },
+    "exposure_hint": {
+      "type": "string",
+      "enum": ["auto", "brighter", "darker", "hold"],
+      "description": "Optional exposure hint; physical lighting guidance preferred on iOS"
+    },
+    "status_flags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "no_face",
+          "multiple_faces",
+          "subject_out_of_frame",
+          "low_light",
+          "high_motion",
+          "ready",
+          "hold_position"
+        ]
+      },
+      "uniqueItems": true,
+      "description": "Optional scene quality flags for UI and gate logic"
+    }
+  }
+}

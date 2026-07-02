@@ -1,97 +1,109 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# SmartCamera
 
-# Getting Started
+מערכת צילום וידאו/סטילס חכמה לטלפון — AI בזמן אמת, חצובה ממונעת (PAN/TILT/HEIGHT), והנחיות קוליות/טקסטואליות.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+## Stack
 
-## Step 1: Start Metro
+| Layer | Technology |
+|-------|------------|
+| Framework | React Native 0.86 (bare) |
+| Language | TypeScript |
+| Navigation | React Navigation 7 |
+| State | Zustand |
+| Camera (planned) | react-native-vision-camera |
+| ML (planned) | ML Kit / MediaPipe via native modules |
+| Tripod (planned) | BLE/WiFi native module |
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+## Getting started
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+### Prerequisites
 
-```sh
-# Using npm
-npm start
+- Node.js ≥ 22.11
+- Xcode (iOS) / Android Studio (Android)
+- CocoaPods (iOS)
 
-# OR using Yarn
-yarn start
-```
+### Install
 
-## Step 2: Build and run your app
-
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
-
-### Android
-
-```sh
-# Using npm
-npm run android
-
-# OR using Yarn
-yarn android
+```bash
+npm install
 ```
 
 ### iOS
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
-bundle install
-```
-
-Then, and every time you update your native dependencies, run:
-
-```sh
-bundle exec pod install
-```
-
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
-
-```sh
-# Using npm
+```bash
+cd ios && bundle install && bundle exec pod install && cd ..
 npm run ios
-
-# OR using Yarn
-yarn ios
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+### Android
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+```bash
+npm run android
+```
 
-## Step 3: Modify your app
+### Environment
 
-Now that you have successfully run the app, let's make changes!
+Copy `.env.example` to `.env` and adjust as needed. Mock tripod is enabled by default.
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+## Project structure
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+```
+src/
+├── app/           App shell
+├── navigation/    React Navigation
+├── screens/       UI screens (Splash → Home → Scene → Tripod → Camera)
+├── services/      Camera, AI, tripod
+├── stores/        Zustand state
+└── types/         TypeScript types
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+config/
+├── ai-contract/   Fixed system prompt for AI
+└── scene-profiles/ 18 scenes (9 video + 9 still)
 
-## Congratulations! :tada:
+schemas/           JSON Schema for AI request/response
+docs/              Architecture & tripod protocol
+native-modules/    Custom Swift/Kotlin modules (placeholder)
+```
 
-You've successfully run and modified your React Native App. :partying_face:
+## Current status (Phase 0)
 
-### Now what?
+- [x] Bare React Native project
+- [x] Folder structure & navigation shell
+- [x] 18 scene profiles (JSON)
+- [x] AI contract + JSON schemas
+- [x] Tripod protocol draft + Mock controller
+- [ ] CI/CD (EAS / Fastlane)
+- [ ] Camera integration (Vision Camera)
+- [ ] Native tripod module
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
+## Screen flow
 
-# Troubleshooting
+```
+Splash → Home → Scene Select → Tripod Connect → Camera
+```
 
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+## Roadmap
 
-# Learn More
+| Phase | Focus | Duration |
+|-------|-------|----------|
+| 0 | Infrastructure | 2–3 weeks |
+| 1 | Camera MVP | 3–4 weeks |
+| 2 | Scenes + Tripod | 2–3 weeks |
+| 3 | AI Pipeline | 4–6 weeks |
+| 4 | Autonomous filming | 3–4 weeks |
+| 5 | Recording triggers | 2–3 weeks |
+| 6 | Editing | 3–4 weeks |
+| 7–8 | Share + QA | 3–5 weeks |
 
-To learn more about React Native, take a look at the following resources:
+Full MVP estimate: **~6–9 months**.
 
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+## Key files
+
+- AI response schema: `schemas/ai-response.schema.json`
+- Scene profiles: `config/scene-profiles/profiles.json`
+- Tripod protocol: `docs/tripod-protocol.md`
+- Architecture: `docs/architecture.md`
+
+## License
+
+Private — all rights reserved.

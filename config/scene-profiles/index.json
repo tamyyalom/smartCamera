@@ -1,0 +1,25 @@
+{
+  "version": "1.0.0",
+  "video_scenes": [
+    "video_broadcast",
+    "video_interview",
+    "video_tutorial",
+    "video_presentation",
+    "video_demo",
+    "video_testimonial",
+    "video_explainer",
+    "video_announcement",
+    "video_music"
+  ],
+  "still_scenes": [
+    "still_portrait",
+    "still_product",
+    "still_food",
+    "still_macro",
+    "still_online",
+    "still_studio",
+    "still_interior",
+    "still_group",
+    "still_flat_lay"
+  ]
+}
