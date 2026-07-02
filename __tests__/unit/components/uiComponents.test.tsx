@@ -1,5 +1,5 @@
 import React from 'react';
-import {Alert, Share} from 'react-native';
+import {Alert} from 'react-native';
 import ReactTestRenderer from 'react-test-renderer';
 import ShareLib from 'react-native-share';
 import {MediaFileRow} from '@/components/MediaFileRow';
