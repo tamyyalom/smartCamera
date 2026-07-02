@@ -15,11 +15,12 @@ import {
   useCameraDevice,
   usePhotoOutput,
   useVideoOutput,
-  type Recorder,
 } from 'react-native-vision-camera';
 import {CameraControlsPanel} from '../components/camera/CameraControlsPanel';
+import {RecordingControls} from '../components/camera/RecordingControls';
 import {getSceneProfile} from '../config/scenes';
 import {useCameraPermissions} from '../hooks/useCameraPermissions';
+import {useVideoRecorder} from '../hooks/useVideoRecorder';
 import {saveMediaFile} from '../services/media';
 import {useAppStore} from '../stores/useAppStore';
 import type {RootStackScreenProps} from '../types/navigation';
@@ -45,12 +46,9 @@ export function CameraScreen({
   const videoOutput = useVideoOutput({enableAudio: mode === 'video'});
 
   const cameraRef = useRef<CameraRef>(null);
-  const recorderRef = useRef<Recorder | null>(null);
-  const recordingStartedAt = useRef(0);
 
   const [zoom, setZoom] = useState(1);
   const [exposure, setExposure] = useState(0);
-  const [isRecording, setIsRecording] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
   const [showControls, setShowControls] = useState(false);
   const [limits, setLimits] = useState({
@@ -60,6 +58,8 @@ export function CameraScreen({
     maxExposure: DEFAULT_MAX_EXPOSURE,
     supportsExposure: true,
   });
+
+  const recorder = useVideoRecorder({videoOutput, photoOutput});
 
   const outputs = useMemo(
     () => (mode === 'video' ? [videoOutput, photoOutput] : [photoOutput]),
@@ -133,76 +133,29 @@ export function CameraScreen({
     }
   };
 
-  const startRecording = async () => {
-    if (isRecording || recorderRef.current) {
-      return;
-    }
-    try {
-      const recorder = await videoOutput.createRecorder({});
-      recorderRef.current = recorder;
-      recordingStartedAt.current = Date.now();
-
-      await recorder.startRecording(
-        async filePath => {
-          const durationMs = Date.now() - recordingStartedAt.current;
-          setIsRecording(false);
-          recorderRef.current = null;
-          try {
-            await saveMediaFile({
-              type: 'video',
-              sourceUri: filePath,
-              durationMs,
-            });
-            Alert.alert('נשמר', 'ההקלטה נשמרה בהצלחה');
-          } catch (error) {
-            Alert.alert(
-              'שגיאה',
-              error instanceof Error ? error.message : 'שמירה נכשלה',
-            );
-          }
+  const handleBack = () => {
+    if (mode === 'video' && recorder.isActive) {
+      Alert.alert('הקלטה פעילה', 'לעצור או לבטל את ההקלטה לפני יציאה?', [
+        {text: 'המשך הקלטה', style: 'cancel'},
+        {
+          text: 'בטל הקלטה',
+          style: 'destructive',
+          onPress: async () => {
+            await recorder.cancel();
+            navigation.goBack();
+          },
         },
-        error => {
-          setIsRecording(false);
-          recorderRef.current = null;
-          Alert.alert('שגיאה', error.message);
+        {
+          text: 'שמור וצא',
+          onPress: async () => {
+            await recorder.stop();
+            navigation.goBack();
+          },
         },
-      );
-      setIsRecording(true);
-    } catch (error) {
-      recorderRef.current = null;
-      Alert.alert(
-        'שגיאה',
-        error instanceof Error ? error.message : 'הקלטה נכשלה',
-      );
-    }
-  };
-
-  const stopRecording = async () => {
-    if (!recorderRef.current) {
+      ]);
       return;
     }
-    try {
-      await recorderRef.current.stopRecording();
-    } catch (error) {
-      setIsRecording(false);
-      recorderRef.current = null;
-      Alert.alert(
-        'שגיאה',
-        error instanceof Error ? error.message : 'עצירה נכשלה',
-      );
-    }
-  };
-
-  const handleShutter = () => {
-    if (mode === 'photo') {
-      takePhoto();
-      return;
-    }
-    if (isRecording) {
-      stopRecording();
-    } else {
-      startRecording();
-    }
+    navigation.goBack();
   };
 
   if (!hasAllPermissions) {
@@ -249,7 +202,7 @@ export function CameraScreen({
 
       <SafeAreaView style={styles.overlay} edges={['top', 'bottom']}>
         <View style={styles.topBar}>
-          <Pressable onPress={() => navigation.goBack()}>
+          <Pressable onPress={handleBack}>
             <Text style={styles.backText}>← חזרה</Text>
           </Pressable>
           <View style={styles.badges}>
@@ -282,41 +235,33 @@ export function CameraScreen({
         )}
 
         <View style={styles.bottomBar}>
-          {isRecording && (
-            <View style={styles.recordingBadge}>
-              <View style={styles.recordingDot} />
-              <Text style={styles.recordingText}>מקליט</Text>
-            </View>
+          {mode === 'video' ? (
+            <RecordingControls
+              phase={recorder.phase}
+              elapsedLabel={recorder.elapsedLabel}
+              isBusy={recorder.isBusy}
+              onStart={recorder.start}
+              onStop={recorder.stop}
+              onPause={recorder.pause}
+              onResume={recorder.resume}
+              onCancel={recorder.cancel}
+              onSnapshot={recorder.takeSnapshot}
+            />
+          ) : (
+            <>
+              <Pressable
+                style={[styles.shutter, isCapturing && styles.shutterActive]}
+                onPress={takePhoto}
+                disabled={isCapturing}>
+                {isCapturing ? (
+                  <ActivityIndicator color="#ffffff" />
+                ) : (
+                  <View style={styles.shutterInner} />
+                )}
+              </Pressable>
+              <Text style={styles.shutterHint}>לחץ לצילום</Text>
+            </>
           )}
-
-          <Pressable
-            style={[
-              styles.shutter,
-              mode === 'video' && isRecording && styles.shutterRecording,
-              (isCapturing || (mode === 'video' && isRecording)) &&
-                styles.shutterActive,
-            ]}
-            onPress={handleShutter}
-            disabled={isCapturing}>
-            {isCapturing ? (
-              <ActivityIndicator color="#ffffff" />
-            ) : (
-              <View
-                style={[
-                  styles.shutterInner,
-                  mode === 'video' && isRecording && styles.shutterInnerSquare,
-                ]}
-              />
-            )}
-          </Pressable>
-
-          <Text style={styles.shutterHint}>
-            {mode === 'photo'
-              ? 'לחץ לצילום'
-              : isRecording
-                ? 'לחץ לעצירה'
-                : 'לחץ להקלטה'}
-          </Text>
         </View>
       </SafeAreaView>
     </View>
@@ -400,26 +345,6 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     gap: 10,
   },
-  recordingBadge: {
-    flexDirection: 'row-reverse',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: 'rgba(220, 38, 38, 0.85)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  recordingDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#ffffff',
-  },
-  recordingText: {
-    color: '#ffffff',
-    fontWeight: '600',
-    writingDirection: 'rtl',
-  },
   shutter: {
     width: 76,
     height: 76,
@@ -430,9 +355,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'rgba(0,0,0,0.2)',
   },
-  shutterRecording: {
-    borderColor: '#ef4444',
-  },
   shutterActive: {
     opacity: 0.85,
   },
@@ -441,11 +363,6 @@ const styles = StyleSheet.create({
     height: 58,
     borderRadius: 29,
     backgroundColor: '#ef4444',
-  },
-  shutterInnerSquare: {
-    width: 28,
-    height: 28,
-    borderRadius: 6,
   },
   shutterHint: {
     color: '#94a3b8',
