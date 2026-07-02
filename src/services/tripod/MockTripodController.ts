@@ -1,36 +1,20 @@
-import type {SpeedProfile} from '../../types/scene';
+import {TRIPOD_CONFIG} from '../../config/tripod';
 import type {TripodState} from '../../types/ai';
+import {encodeCommand, mockAck} from './tripodProtocol';
+import {applyStateDelta, AXIS_LIMITS} from './tripodSafety';
+import type {MoveCommand, TripodController, TripodDevice} from './types';
 
-export interface MoveCommand {
-  pan_delta: number;
-  tilt_delta: number;
-  height_delta: number;
-  speed_profile: SpeedProfile;
-}
-
-export interface TripodController {
-  connect(): Promise<boolean>;
-  disconnect(): Promise<void>;
-  ping(): Promise<boolean>;
-  move(command: MoveCommand): Promise<TripodState>;
-  getState(): Promise<TripodState>;
-}
-
-const LIMITS = {
-  pan: {min: -180, max: 180},
-  tilt: {min: -45, max: 45},
-  height: {min: 80, max: 180},
-};
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
-}
+const MOCK_DEVICES: TripodDevice[] = [
+  {id: 'mock-tripod-1', name: 'SmartCamera Tripod', rssi: -42},
+  {id: 'mock-tripod-2', name: 'SmartCamera Tripod Pro', rssi: -58},
+];
 
 /**
- * In-app tripod simulator for development without hardware.
- * Set TRIPOD_MODE=mock (default until native module exists).
+ * In-app tripod simulator with BLE-like scan/connect flow for development.
  */
 export class MockTripodController implements TripodController {
+  readonly mode = 'mock' as const;
+
   private state: TripodState = {
     pan: 0,
     tilt: 0,
@@ -39,52 +23,66 @@ export class MockTripodController implements TripodController {
     connected: false,
   };
 
-  async connect(): Promise<boolean> {
-    await this.delay(400);
+  private connectedDeviceId: string | null = null;
+
+  async scan(durationMs = TRIPOD_CONFIG.scanDurationMs): Promise<TripodDevice[]> {
+    await this.delay(Math.min(durationMs, 1200));
+    return MOCK_DEVICES;
+  }
+
+  async connect(deviceId: string): Promise<boolean> {
+    await this.delay(500);
+    const device = MOCK_DEVICES.find(item => item.id === deviceId);
+    if (!device) {
+      return false;
+    }
+    this.connectedDeviceId = deviceId;
     this.state.connected = true;
     return true;
   }
 
   async disconnect(): Promise<void> {
+    this.connectedDeviceId = null;
     this.state.connected = false;
   }
 
-  async ping(): Promise<boolean> {
+  isConnected(): boolean {
     return this.state.connected;
+  }
+
+  async ping(): Promise<boolean> {
+    if (!this.state.connected) {
+      return false;
+    }
+    const raw = encodeCommand('PING');
+    const response = mockAck(JSON.parse(raw).seq, this.state);
+    return response.type === 'ACK';
   }
 
   async move(command: MoveCommand): Promise<TripodState> {
     if (!this.state.connected) {
-      throw new Error('Tripod not connected');
+      throw new Error('החצובה לא מחוברת');
     }
 
     await this.delay(120);
+    this.state = applyStateDelta(this.state, command);
+    return {...this.state};
+  }
 
-    this.state = {
-      ...this.state,
-      pan: clamp(
-        this.state.pan + command.pan_delta,
-        LIMITS.pan.min,
-        LIMITS.pan.max,
-      ),
-      tilt: clamp(
-        this.state.tilt + command.tilt_delta,
-        LIMITS.tilt.min,
-        LIMITS.tilt.max,
-      ),
-      height: clamp(
-        this.state.height + command.height_delta,
-        LIMITS.height.min,
-        LIMITS.height.max,
-      ),
-      last_command_ms: Date.now(),
-    };
-
+  async stop(): Promise<TripodState> {
+    if (!this.state.connected) {
+      throw new Error('החצובה לא מחוברת');
+    }
+    await this.delay(80);
     return {...this.state};
   }
 
   async getState(): Promise<TripodState> {
     return {...this.state};
+  }
+
+  getConnectedDeviceId(): string | null {
+    return this.connectedDeviceId;
   }
 
   private delay(ms: number): Promise<void> {
@@ -93,3 +91,5 @@ export class MockTripodController implements TripodController {
 }
 
 export const mockTripodController = new MockTripodController();
+
+export {AXIS_LIMITS};

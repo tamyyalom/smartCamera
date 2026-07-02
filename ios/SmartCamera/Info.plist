@@ -41,6 +41,8 @@
 	<string>SmartCamera needs microphone access for video recording.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>SmartCamera saves photos and videos to your gallery.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>SmartCamera uses Bluetooth to discover and connect to the motorized tripod.</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

@@ -43,6 +43,7 @@ export function CameraScreen({
   const isFocused = useIsFocused();
   const updateCameraState = useAppStore(state => state.updateCameraState);
   const resetSession = useAppStore(state => state.resetSession);
+  const tripodConnected = useAppStore(state => state.tripod.connected);
 
   const {hasAllPermissions, requestAll} = useCameraPermissions(mode === 'video');
   const {status: cameraStatus, device} = useCameraDeviceStatus();
@@ -237,6 +238,9 @@ export function CameraScreen({
           <View style={styles.badges}>
             <Text style={styles.sceneBadge}>{scene?.name_he ?? sceneId}</Text>
             <Text style={styles.modeBadge}>{modeLabel}</Text>
+            {tripodConnected ? (
+              <Text style={styles.tripodBadge}>חצובה ✓</Text>
+            ) : null}
           </View>
           <Pressable onPress={handleFinish}>
             <Text style={styles.finishText}>סיום</Text>
@@ -385,6 +389,16 @@ const styles = StyleSheet.create({
   },
   modeBadge: {
     backgroundColor: 'rgba(37, 99, 235, 0.85)',
+    color: '#ffffff',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    overflow: 'hidden',
+    fontSize: 13,
+    writingDirection: 'rtl',
+  },
+  tripodBadge: {
+    backgroundColor: 'rgba(22, 163, 74, 0.9)',
     color: '#ffffff',
     paddingHorizontal: 10,
     paddingVertical: 5,
