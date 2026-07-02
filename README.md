@@ -10,9 +10,10 @@
 | Language | TypeScript |
 | Navigation | React Navigation 7 |
 | State | Zustand |
-| Camera (planned) | react-native-vision-camera |
+| Camera | react-native-vision-camera 5 |
+| Media | react-native-fs, @react-native-camera-roll/camera-roll, react-native-video |
 | ML (planned) | ML Kit / MediaPipe via native modules |
-| Tripod (planned) | BLE/WiFi native module |
+| Tripod (Phase 2) | BLE/WiFi native module (Mock in Phase 1) |
 
 ## Getting started
 
@@ -65,7 +66,9 @@ docs/              Architecture & tripod protocol
 native-modules/    Custom Swift/Kotlin modules (placeholder)
 ```
 
-## Current status (Phase 0)
+## Current status
+
+### Phase 0 — Infrastructure (~70%)
 
 - [x] Bare React Native project
 - [x] Folder structure & navigation shell
@@ -73,8 +76,20 @@ native-modules/    Custom Swift/Kotlin modules (placeholder)
 - [x] AI contract + JSON schemas
 - [x] Tripod protocol draft + Mock controller
 - [ ] CI/CD (EAS / Fastlane)
-- [ ] Camera integration (Vision Camera)
-- [ ] Native tripod module
+- [ ] Native tripod module (BLE/WiFi)
+
+### Phase 1 — Camera MVP ✅
+
+- [x] **מסך פתיחה** (Splash)
+- [x] **מסך בית** — "התחל צילום" / "התחל הקלטה" + רשימת קבצים (הצגה/שיתוף/מחיקה)
+- [x] **אינטגרציית מצלמה** — preview חי, zoom, focus, exposure
+- [x] **הקלטת וידאו** — start/stop/pause/resume, שמירה לאפליקציה ולגלריה
+- [x] **צילום סטילס** — שמירה לאפליקציה ולגלריה
+- [x] **Navigation flow** — מסכים 1→2→3→4 (בית → סצנה → חצובה → מצלמה)
+- [x] **File manager** — רשימת הקלטות/תמונות מקומיות, סינון, נגן וידאו
+
+> **הערה:** כפתור **עריכה** קיים בניווט, אך מסך העריכה הוא placeholder — עריכה אמיתית מתוכננת לשלב 6.  
+> **בדיקה:** יש להריץ על מכשיר פיזי (אין מצלמה בסימולטור).
 
 ## Screen flow
 
@@ -86,8 +101,8 @@ Splash → Home → Scene Select → Tripod Connect → Camera
 
 | Phase | Focus | Duration |
 |-------|-------|----------|
-| 0 | Infrastructure | 2–3 weeks |
-| 1 | Camera MVP | 3–4 weeks |
+| 0 | Infrastructure | 2–3 weeks | In progress |
+| 1 | Camera MVP | 3–4 weeks | **Done** |
 | 2 | Scenes + Tripod | 2–3 weeks |
 | 3 | AI Pipeline | 4–6 weeks |
 | 4 | Autonomous filming | 3–4 weeks |
