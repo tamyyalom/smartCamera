@@ -41,6 +41,38 @@ export interface CameraState {
   focus_distance?: number;
 }
 
+export type FaceGuideStatus = 'unavailable' | 'idle' | 'misaligned' | 'ready';
+
+export interface FaceBox {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface TrackingState {
+  faceCount: number;
+  faceBox?: FaceBox;
+  faceConfidence?: number;
+  motionScore: number;
+  guideStatus: FaceGuideStatus;
+}
+
+export interface FrameMeta {
+  width: number;
+  height: number;
+  format: 'jpeg' | 'png' | 'webp';
+  base64?: string;
+}
+
+export interface AIRequestPayload {
+  scene_id: string;
+  scene_profile: Record<string, unknown>;
+  state: SystemState & {tracking?: TrackingState};
+  limits: Record<string, unknown>;
+  frame_meta: FrameMeta;
+}
+
 export interface SystemState {
   tripod: TripodState;
   camera: CameraState;
