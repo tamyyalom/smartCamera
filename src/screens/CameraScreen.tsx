@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -11,12 +11,13 @@ import {useIsFocused} from '@react-navigation/native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {
   Camera,
-  type CameraRef,
   usePhotoOutput,
   useVideoOutput,
 } from 'react-native-vision-camera';
+import {useFaceDetector} from '@noma4i/vision-camera-face-detector';
 import {CameraControlsPanel} from '../components/camera/CameraControlsPanel';
 import {CameraUnavailableView} from '../components/camera/CameraUnavailableView';
+import {FaceGuideBanner} from '../components/camera/FaceGuideBanner';
 import {PhotoCaptureControls} from '../components/camera/PhotoCaptureControls';
 import {RecordingControls} from '../components/camera/RecordingControls';
 import {FlowProgress} from '../components/navigation/FlowProgress';
@@ -25,6 +26,7 @@ import {useCameraDeviceStatus} from '../hooks/useCameraDeviceStatus';
 import {useCameraPermissions} from '../hooks/useCameraPermissions';
 import {usePhotoCapture} from '../hooks/usePhotoCapture';
 import {useVideoRecorder} from '../hooks/useVideoRecorder';
+import {sceneUsesFaceGuide} from '../services/ai';
 import {useAppStore} from '../stores/useAppStore';
 import type {RootStackScreenProps} from '../types/navigation';
 
@@ -42,15 +44,29 @@ export function CameraScreen({
   const modeLabel = mode === 'video' ? 'הקלטה' : 'צילום';
   const isFocused = useIsFocused();
   const updateCameraState = useAppStore(state => state.updateCameraState);
+  const updateTrackingState = useAppStore(state => state.updateTrackingState);
   const resetSession = useAppStore(state => state.resetSession);
   const tripodConnected = useAppStore(state => state.tripod.connected);
+
+  const enableFaceGuide = sceneUsesFaceGuide(scene);
 
   const {hasAllPermissions, requestAll} = useCameraPermissions(mode === 'video');
   const {status: cameraStatus, device} = useCameraDeviceStatus();
   const photoOutput = usePhotoOutput();
   const videoOutput = useVideoOutput({enableAudio: mode === 'video'});
 
-  const cameraRef = useRef<CameraRef>(null);
+  const captureOutputs = useMemo(
+    () => (mode === 'video' ? [videoOutput, photoOutput] : [photoOutput]),
+    [mode, photoOutput, videoOutput],
+  );
+
+  const face = useFaceDetector({
+    preset: mode === 'video' ? 'fast' : 'accurate',
+    outputs: captureOutputs,
+    guide: enableFaceGuide ? 'selfie' : 'none',
+  });
+
+  const cameraRef = face.camera.ref;
 
   const [zoom, setZoom] = useState(1);
   const [exposure, setExposure] = useState(0);
@@ -65,11 +81,6 @@ export function CameraScreen({
 
   const recorder = useVideoRecorder({videoOutput, photoOutput});
   const photoCapture = usePhotoCapture(photoOutput);
-
-  const outputs = useMemo(
-    () => (mode === 'video' ? [videoOutput, photoOutput] : [photoOutput]),
-    [mode, photoOutput, videoOutput],
-  );
 
   const sceneZoomRange = scene?.framing.zoom_range;
 
@@ -96,11 +107,27 @@ export function CameraScreen({
     });
     setZoom(initialZoom);
     cameraRef.current?.controller?.setZoom(initialZoom).catch(() => {});
-  }, [sceneZoomRange]);
+  }, [cameraRef, sceneZoomRange]);
 
   useEffect(() => {
     updateCameraState({zoom, exposure});
   }, [zoom, exposure, updateCameraState]);
+
+  useEffect(() => {
+    if (!enableFaceGuide) {
+      return;
+    }
+
+    const rect = face.result.primaryFaceRect;
+    updateTrackingState({
+      faceCount: face.result.faces.length,
+      faceBox: rect
+        ? {x: rect.x, y: rect.y, width: rect.width, height: rect.height}
+        : undefined,
+      guideStatus: face.status,
+      motionScore: face.status === 'ready' ? 0 : 0.4,
+    });
+  }, [enableFaceGuide, face.result, face.status, updateTrackingState]);
 
   const handleZoomChange = (value: number) => {
     setZoom(value);
@@ -219,7 +246,7 @@ export function CameraScreen({
         style={StyleSheet.absoluteFill}
         device={device}
         isActive={isFocused && hasAllPermissions}
-        outputs={outputs}
+        outputs={face.camera.outputs}
         zoom={zoom}
         exposure={exposure}
         enableNativeTapToFocusGesture
@@ -252,6 +279,12 @@ export function CameraScreen({
             <Text style={styles.hintText}>💡 {guidanceHint}</Text>
           </View>
         ) : null}
+
+        <FaceGuideBanner
+          enabled={enableFaceGuide}
+          status={face.status}
+          faceCount={face.result.faces.length}
+        />
 
         {showControls && (
           <View style={styles.controlsPanelWrap}>

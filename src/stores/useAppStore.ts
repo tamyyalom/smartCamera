@@ -1,15 +1,17 @@
 import {create} from 'zustand';
-import type {CameraState, TripodState} from '../types/ai';
+import type {CameraState, TrackingState, TripodState} from '../types/ai';
 
 interface AppState {
   selectedSceneId: string | null;
   captureMode: 'photo' | 'video' | null;
   tripod: TripodState;
   camera: CameraState;
+  tracking: TrackingState;
   setSelectedScene: (sceneId: string, mode: 'photo' | 'video') => void;
   setTripodConnected: (connected: boolean) => void;
   updateTripodState: (partial: Partial<TripodState>) => void;
   updateCameraState: (partial: Partial<CameraState>) => void;
+  updateTrackingState: (partial: Partial<TrackingState>) => void;
   resetSession: () => void;
 }
 
@@ -25,11 +27,18 @@ const defaultCamera: CameraState = {
   zoom: 1,
 };
 
+const defaultTracking: TrackingState = {
+  faceCount: 0,
+  motionScore: 0,
+  guideStatus: 'unavailable',
+};
+
 export const useAppStore = create<AppState>(set => ({
   selectedSceneId: null,
   captureMode: null,
   tripod: defaultTripod,
   camera: defaultCamera,
+  tracking: defaultTracking,
   setSelectedScene: (sceneId, mode) =>
     set({selectedSceneId: sceneId, captureMode: mode}),
   setTripodConnected: connected =>
@@ -38,11 +47,14 @@ export const useAppStore = create<AppState>(set => ({
     set(state => ({tripod: {...state.tripod, ...partial}})),
   updateCameraState: partial =>
     set(state => ({camera: {...state.camera, ...partial}})),
+  updateTrackingState: partial =>
+    set(state => ({tracking: {...state.tracking, ...partial}})),
   resetSession: () =>
     set({
       selectedSceneId: null,
       captureMode: null,
       tripod: defaultTripod,
       camera: defaultCamera,
+      tracking: defaultTracking,
     }),
 }));
