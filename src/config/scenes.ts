@@ -25,3 +25,12 @@ export function getStillScenes(): SceneProfile[] {
 export function getScenesForMode(mode: 'photo' | 'video'): SceneProfile[] {
   return mode === 'video' ? getVideoScenes() : getStillScenes();
 }
+
+export function getSceneCounts(): {video: number; still: number} {
+  return {
+    video: getVideoScenes().length,
+    still: getStillScenes().length,
+  };
+}
+
+export const EXPECTED_SCENE_COUNTS = {video: 9, still: 9} as const;
