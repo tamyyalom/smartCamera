@@ -10,6 +10,7 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import {formatMediaDate, getMediaFile} from '../services/media';
 import type {RootStackScreenProps} from '../types/navigation';
 import type {MediaFile} from '../types/media';
+import {a11yButton, a11yHeader} from '../utils/accessibility';
 
 export function EditScreen({navigation, route}: RootStackScreenProps<'Edit'>) {
   const {fileId} = route.params;
@@ -35,7 +36,9 @@ export function EditScreen({navigation, route}: RootStackScreenProps<'Edit'>) {
     return (
       <View style={styles.center}>
         <Text style={styles.errorText}>הקובץ לא נמצא</Text>
-        <Pressable onPress={() => navigation.goBack()}>
+        <Pressable
+          {...a11yButton('חזרה')}
+          onPress={() => navigation.goBack()}>
           <Text style={styles.link}>חזרה</Text>
         </Pressable>
       </View>
@@ -45,10 +48,14 @@ export function EditScreen({navigation, route}: RootStackScreenProps<'Edit'>) {
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <View style={styles.header}>
-        <Pressable onPress={() => navigation.goBack()}>
+        <Pressable
+          {...a11yButton('חזרה')}
+          onPress={() => navigation.goBack()}>
           <Text style={styles.back}>← חזרה</Text>
         </Pressable>
-        <Text style={styles.title}>עריכה</Text>
+        <Text style={styles.title} {...a11yHeader('עריכה')}>
+          עריכה
+        </Text>
         <View style={styles.headerSpacer} />
       </View>
 

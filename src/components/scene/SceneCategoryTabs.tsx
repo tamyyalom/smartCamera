@@ -1,5 +1,6 @@
 import React from 'react';
 import {Pressable, StyleSheet, Text, View} from 'react-native';
+import {a11yTab} from '../../utils/accessibility';
 
 interface SceneCategoryTabsProps {
   activeMode: 'photo' | 'video';
@@ -17,6 +18,7 @@ export function SceneCategoryTabs({
   return (
     <View style={styles.container}>
       <Pressable
+        {...a11yTab(`סצנות וידאו, ${videoCount}`, activeMode === 'video')}
         style={[styles.tab, activeMode === 'video' && styles.tabActive]}
         onPress={() => onChange('video')}>
         <Text style={[styles.tabText, activeMode === 'video' && styles.tabTextActive]}>
@@ -24,6 +26,7 @@ export function SceneCategoryTabs({
         </Text>
       </Pressable>
       <Pressable
+        {...a11yTab(`סצנות סטילס, ${stillCount}`, activeMode === 'photo')}
         style={[styles.tab, activeMode === 'photo' && styles.tabActive]}
         onPress={() => onChange('photo')}>
         <Text style={[styles.tabText, activeMode === 'photo' && styles.tabTextActive]}>

@@ -1,5 +1,6 @@
 import React from 'react';
 import {ActivityIndicator, Pressable, StyleSheet, Text, View} from 'react-native';
+import {a11yButton} from '../../utils/accessibility';
 
 interface PhotoCaptureControlsProps {
   isCapturing: boolean;
@@ -13,6 +14,10 @@ export function PhotoCaptureControls({
   return (
     <View style={styles.container}>
       <Pressable
+        {...a11yButton(isCapturing ? 'שומר תמונה' : 'צלם תמונה', {
+          disabled: isCapturing,
+          hint: 'שומר את התמונה בגלריה ובאפליקציה',
+        })}
         style={[styles.shutter, isCapturing && styles.shutterDisabled]}
         onPress={onCapture}
         disabled={isCapturing}>

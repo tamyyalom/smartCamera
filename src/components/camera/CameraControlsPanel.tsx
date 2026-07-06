@@ -1,5 +1,6 @@
 import React from 'react';
 import {Pressable, StyleSheet, Text, View} from 'react-native';
+import {a11yButton} from '../../utils/accessibility';
 
 interface CameraControlsPanelProps {
   zoom: number;
@@ -42,17 +43,31 @@ function Stepper({
       <Text style={styles.stepperLabel}>{label}</Text>
       <View style={styles.stepperControls}>
         <Pressable
+          {...a11yButton(`הקטן ${label}`, {
+            disabled: disabled || value <= min,
+          })}
           style={[styles.stepBtn, disabled && styles.stepBtnDisabled]}
           disabled={disabled || value <= min}
           onPress={() => onChange(clamp(value - step, min, max))}>
-          <Text style={styles.stepBtnText}>−</Text>
+          <Text style={styles.stepBtnText} importantForAccessibility="no">
+            −
+          </Text>
         </Pressable>
-        <Text style={styles.stepperValue}>{format(value)}</Text>
+        <Text
+          style={styles.stepperValue}
+          accessibilityLabel={`${label}: ${format(value)}`}>
+          {format(value)}
+        </Text>
         <Pressable
+          {...a11yButton(`הגדל ${label}`, {
+            disabled: disabled || value >= max,
+          })}
           style={[styles.stepBtn, disabled && styles.stepBtnDisabled]}
           disabled={disabled || value >= max}
           onPress={() => onChange(clamp(value + step, min, max))}>
-          <Text style={styles.stepBtnText}>+</Text>
+          <Text style={styles.stepBtnText} importantForAccessibility="no">
+            +
+          </Text>
         </Pressable>
       </View>
     </View>
@@ -92,7 +107,10 @@ export function CameraControlsPanel({
         disabled={!supportsExposure}
         onChange={onExposureChange}
       />
-      <Pressable style={styles.resetBtn} onPress={onReset}>
+      <Pressable
+        {...a11yButton('איפוס הגדרות מצלמה')}
+        style={styles.resetBtn}
+        onPress={onReset}>
         <Text style={styles.resetText}>איפוס</Text>
       </Pressable>
     </View>

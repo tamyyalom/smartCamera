@@ -9,6 +9,7 @@ import {
   getScenesForMode,
 } from '../config/scenes';
 import {useAppStore} from '../stores/useAppStore';
+import {a11yButton} from '../utils/accessibility';
 import type {RootStackScreenProps} from '../types/navigation';
 import type {SceneProfile} from '../types/scene';
 
@@ -84,6 +85,10 @@ export function SceneSelectScreen({
       footer={
         <Pressable
           testID="sceneSelect.continue"
+          {...a11yButton('המשך', {
+            disabled: !selectedId,
+            hint: 'מעבר לחיבור חצובה',
+          })}
           style={[styles.continueButton, !selectedId && styles.continueDisabled]}
           disabled={!selectedId}
           onPress={onContinue}>
@@ -107,6 +112,7 @@ export function SceneSelectScreen({
       ) : null}
 
       <FlatList
+        accessibilityLabel={`רשימת סצנות ${activeMode === 'video' ? 'וידאו' : 'סטילס'}`}
         data={scenes}
         keyExtractor={item => item.id}
         renderItem={renderItem}

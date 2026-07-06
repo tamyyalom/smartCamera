@@ -1,6 +1,7 @@
 import React from 'react';
 import {StyleSheet, Text, View} from 'react-native';
 import type {FaceGuideStatus} from '../../types/ai';
+import {a11yHeader} from '../../utils/accessibility';
 
 const STATUS_LABELS: Record<FaceGuideStatus, string> = {
   unavailable: 'זיהוי פנים לא זמין במכשיר זה',
@@ -31,8 +32,16 @@ export function FaceGuideBanner({
         ? styles.warn
         : styles.neutral;
 
+  const message =
+    faceCount > 1
+      ? `${STATUS_LABELS[status]}. זוהו ${faceCount} פנים — התמקדי בנושא הראשי`
+      : STATUS_LABELS[status];
+
   return (
-    <View style={[styles.banner, tone]}>
+    <View
+      style={[styles.banner, tone]}
+      {...a11yHeader(message)}
+      accessibilityLiveRegion="polite">
       <Text style={styles.text}>{STATUS_LABELS[status]}</Text>
       {faceCount > 1 ? (
         <Text style={styles.subtext}>זוהו {faceCount} פנים — התמקדי בנושא הראשי</Text>

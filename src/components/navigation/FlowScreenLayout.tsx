@@ -2,6 +2,7 @@ import React from 'react';
 import {Pressable, StyleSheet, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {FlowProgress, type FlowStep} from './FlowProgress';
+import {a11yButton, a11yHeader} from '../../utils/accessibility';
 
 interface FlowScreenLayoutProps {
   step: FlowStep;
@@ -30,11 +31,18 @@ export function FlowScreenLayout({
       <FlowProgress currentStep={step} />
 
       <View style={styles.header}>
-        <Pressable onPress={onBack} hitSlop={8}>
-          <Text style={styles.back}>← חזרה</Text>
+        <Pressable
+          onPress={onBack}
+          hitSlop={8}
+          {...a11yButton('חזרה', {hint: 'חזרה למסך הקודם'})}>
+          <Text style={styles.back} importantForAccessibility="no">
+            ← חזרה
+          </Text>
         </Pressable>
         <View style={styles.titles}>
-          <Text style={styles.title}>{title}</Text>
+          <Text style={styles.title} {...a11yHeader(title)}>
+            {title}
+          </Text>
           {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
         </View>
       </View>

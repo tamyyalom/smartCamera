@@ -1,6 +1,7 @@
 import React from 'react';
 import {Pressable, StyleSheet, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {a11yButton, a11yHeader} from '../../utils/accessibility';
 
 interface CameraUnavailableViewProps {
   onBack: () => void;
@@ -12,7 +13,9 @@ export function CameraUnavailableView({onBack, testID}: CameraUnavailableViewPro
     <SafeAreaView testID={testID} style={styles.container}>
       <View style={styles.content}>
         <Text style={styles.icon}>📷</Text>
-        <Text style={styles.title}>לא נמצאה מצלמה</Text>
+        <Text style={styles.title} {...a11yHeader('לא נמצאה מצלמה')}>
+          לא נמצאה מצלמה
+        </Text>
         <Text style={styles.message}>
           האפליקציה לא מזהה מצלמה אחורית במכשיר הזה.
         </Text>
@@ -20,7 +23,10 @@ export function CameraUnavailableView({onBack, testID}: CameraUnavailableViewPro
           בסימולטור iOS/Android אין מצלמה פיזית — Vision Camera דורשת
           מכשיר אמיתי (iPhone / Android).
         </Text>
-        <Pressable style={styles.button} onPress={onBack}>
+        <Pressable
+          {...a11yButton('חזרה', {hint: 'חזרה למסך הקודם'})}
+          style={styles.button}
+          onPress={onBack}>
           <Text style={styles.buttonText}>חזרה</Text>
         </Pressable>
       </View>

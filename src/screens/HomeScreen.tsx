@@ -13,6 +13,7 @@ import {MediaFileRow} from '../components/MediaFileRow';
 import {FlowProgress} from '../components/navigation/FlowProgress';
 import {useMediaLibrary, type MediaFilter} from '../hooks/useMediaLibrary';
 import {useAppStore} from '../stores/useAppStore';
+import {a11yButton, a11yHeader} from '../utils/accessibility';
 import type {RootStackScreenProps} from '../types/navigation';
 import type {MediaFile} from '../types/media';
 
@@ -96,7 +97,9 @@ export function HomeScreen({navigation}: RootStackScreenProps<'Home'>) {
   return (
     <SafeAreaView testID="home.screen" style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.title}>SmartCamera</Text>
+        <Text style={styles.title} {...a11yHeader('SmartCamera')}>
+          SmartCamera
+        </Text>
         <Text style={styles.subtitle}>שלב 1 — בחרי פעולה להתחלה</Text>
       </View>
 
@@ -105,6 +108,9 @@ export function HomeScreen({navigation}: RootStackScreenProps<'Home'>) {
       <View style={styles.actions}>
         <Pressable
           testID="home.startVideo"
+          {...a11yButton('התחל הקלטה', {
+            hint: 'מעבר לבחירת סצנת וידאו',
+          })}
           style={({pressed}) => [
             styles.button,
             styles.primary,
@@ -116,6 +122,9 @@ export function HomeScreen({navigation}: RootStackScreenProps<'Home'>) {
 
         <Pressable
           testID="home.startPhoto"
+          {...a11yButton('התחל צילום', {
+            hint: 'מעבר לבחירת סצנת סטילס',
+          })}
           style={({pressed}) => [
             styles.button,
             styles.secondary,
@@ -141,6 +150,10 @@ export function HomeScreen({navigation}: RootStackScreenProps<'Home'>) {
           return (
             <Pressable
               key={item.id}
+              {...a11yButton(`סינון: ${item.label}`, {
+                selected: active,
+                hint: 'מציג קבצים לפי סוג',
+              })}
               style={[styles.filterChip, active && styles.filterChipActive]}
               onPress={() => setFilter(item.id)}>
               <Text
@@ -155,6 +168,7 @@ export function HomeScreen({navigation}: RootStackScreenProps<'Home'>) {
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
       <FlatList
+        accessibilityLabel="רשימת קבצים מקומיים"
         data={filteredFiles}
         keyExtractor={item => item.id}
         renderItem={({item}) => (

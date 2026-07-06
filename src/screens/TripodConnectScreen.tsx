@@ -14,6 +14,7 @@ import {TripodTestControls} from '../components/tripod/TripodTestControls';
 import {getSceneProfile} from '../config/scenes';
 import {useTripodConnection} from '../hooks/useTripodConnection';
 import {useAppStore} from '../stores/useAppStore';
+import {a11yButton} from '../utils/accessibility';
 import type {RootStackScreenProps} from '../types/navigation';
 
 export function TripodConnectScreen({
@@ -66,6 +67,10 @@ export function TripodConnectScreen({
           {!isConnected ? (
             <>
               <Pressable
+                {...a11yButton('סרוק מכשירים BLE', {
+                  disabled: isBusy,
+                  hint: 'מחפש חצובות SmartCamera בקרבת מכשיר',
+                })}
                 style={({pressed}) => [
                   styles.button,
                   pressed && styles.pressed,
@@ -82,6 +87,10 @@ export function TripodConnectScreen({
 
               {tripod.selectedDeviceId ? (
                 <Pressable
+                  {...a11yButton('חבר למכשיר הנבחר', {
+                    disabled: isBusy,
+                    hint: 'מתחבר לחצובה שנבחרה ברשימה',
+                  })}
                   style={({pressed}) => [
                     styles.button,
                     styles.secondaryButton,
@@ -101,18 +110,28 @@ export function TripodConnectScreen({
           ) : (
             <>
               <Pressable
+                {...a11yButton('המשך לצילום', {
+                  hint: 'מעבר למסך המצלמה',
+                })}
                 style={({pressed}) => [styles.button, pressed && styles.pressed]}
                 onPress={continueToCamera}>
                 <Text style={styles.buttonText}>המשך לצילום</Text>
               </Pressable>
-              <Pressable onPress={tripod.disconnect}>
+              <Pressable
+                {...a11yButton('נתק חצובה')}
+                onPress={tripod.disconnect}>
                 <Text style={styles.linkText}>נתק חצובה</Text>
               </Pressable>
             </>
           )}
 
           {!isConnected ? (
-            <Pressable testID="tripodConnect.skip" onPress={skipWithoutTripod}>
+            <Pressable
+              testID="tripodConnect.skip"
+              {...a11yButton('דלג — המשך בלי חצובה', {
+                hint: 'מעבר ישירות למצלמה ללא חיבור BLE',
+              })}
+              onPress={skipWithoutTripod}>
               <Text style={styles.skipText}>דלג — המשך בלי חצובה</Text>
             </Pressable>
           ) : null}

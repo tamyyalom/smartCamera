@@ -20,6 +20,7 @@ import {
 } from '../services/media';
 import type {RootStackScreenProps} from '../types/navigation';
 import type {MediaFile} from '../types/media';
+import {a11yButton, a11yImage} from '../utils/accessibility';
 
 export function MediaPreviewScreen({
   navigation,
@@ -64,7 +65,9 @@ export function MediaPreviewScreen({
     return (
       <View style={styles.center}>
         <Text style={styles.errorText}>הקובץ לא נמצא</Text>
-        <Pressable onPress={() => navigation.goBack()}>
+        <Pressable
+          {...a11yButton('חזרה')}
+          onPress={() => navigation.goBack()}>
           <Text style={styles.link}>חזרה</Text>
         </Pressable>
       </View>
@@ -76,10 +79,12 @@ export function MediaPreviewScreen({
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <View style={styles.topBar}>
-        <Pressable onPress={() => navigation.goBack()}>
+        <Pressable
+          {...a11yButton('חזרה')}
+          onPress={() => navigation.goBack()}>
           <Text style={styles.back}>← חזרה</Text>
         </Pressable>
-        <Pressable onPress={handleShare}>
+        <Pressable {...a11yButton('שיתוף קובץ')} onPress={handleShare}>
           <Text style={styles.share}>שיתוף</Text>
         </Pressable>
       </View>
@@ -87,6 +92,7 @@ export function MediaPreviewScreen({
       <View style={styles.previewArea}>
         {file.type === 'photo' ? (
           <Image
+            {...a11yImage(`תצוגת תמונה: ${file.filename}`)}
             source={{uri: toFileUri(file.uri)}}
             style={styles.media}
             resizeMode="contain"
@@ -97,6 +103,7 @@ export function MediaPreviewScreen({
           </View>
         ) : (
           <Video
+            accessibilityLabel={`נגן וידאו: ${file.filename}`}
             source={{uri: toFileUri(file.uri)}}
             style={styles.media}
             resizeMode="contain"

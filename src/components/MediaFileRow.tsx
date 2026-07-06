@@ -17,6 +17,7 @@ import {
   toFileUri,
 } from '../services/media';
 import type {MediaFile} from '../types/media';
+import {a11yButton, a11yImage} from '../utils/accessibility';
 
 interface MediaFileRowProps {
   file: MediaFile;
@@ -60,21 +61,33 @@ export function MediaFileRow({file, onView, onEdit, onDeleted}: MediaFileRowProp
   };
 
   return (
-    <View style={styles.card}>
-      <Pressable style={styles.mainRow} onPress={() => onView(file)}>
+    <View style={styles.card} accessibilityLabel={`${typeLabel}: ${file.filename}`}>
+      <Pressable
+        style={styles.mainRow}
+        {...a11yButton(`פתיחת ${typeLabel}: ${file.filename}`, {
+          hint: 'מעבר לתצוגה מלאה',
+        })}
+        onPress={() => onView(file)}>
         <View style={styles.thumbnailWrap}>
           {file.type === 'photo' ? (
             <Image
+              {...a11yImage(`תמונה ממוזערת: ${file.filename}`)}
               source={{uri: toFileUri(file.uri)}}
               style={styles.thumbnail}
               resizeMode="cover"
             />
           ) : (
-            <VideoThumbnail uri={file.uri} durationLabel={duration ?? undefined} />
+            <VideoThumbnail
+              uri={file.uri}
+              durationLabel={duration ?? undefined}
+              accessibilityLabel={`תמונה ממוזערת לוידאו: ${file.filename}${
+                duration ? `, משך ${duration}` : ''
+              }`}
+            />
           )}
         </View>
 
-        <View style={styles.info}>
+        <View style={styles.info} importantForAccessibility="no-hide-descendants">
           <Text style={styles.filename} numberOfLines={1}>
             {file.filename}
           </Text>
@@ -86,10 +99,15 @@ export function MediaFileRow({file, onView, onEdit, onDeleted}: MediaFileRowProp
       </Pressable>
 
       <View style={styles.actions}>
-        <ActionButton label="הצגה" onPress={() => onView(file)} />
-        <ActionButton label="עריכה" onPress={() => onEdit(file)} />
-        <ActionButton label="שיתוף" onPress={handleShare} />
-        <ActionButton label="מחיקה" onPress={handleDelete} destructive />
+        <ActionButton label="הצגה" fileLabel={file.filename} onPress={() => onView(file)} />
+        <ActionButton label="עריכה" fileLabel={file.filename} onPress={() => onEdit(file)} />
+        <ActionButton label="שיתוף" fileLabel={file.filename} onPress={handleShare} />
+        <ActionButton
+          label="מחיקה"
+          fileLabel={file.filename}
+          onPress={handleDelete}
+          destructive
+        />
       </View>
     </View>
   );
@@ -97,15 +115,20 @@ export function MediaFileRow({file, onView, onEdit, onDeleted}: MediaFileRowProp
 
 function ActionButton({
   label,
+  fileLabel,
   onPress,
   destructive = false,
 }: {
   label: string;
+  fileLabel: string;
   onPress: () => void;
   destructive?: boolean;
 }) {
   return (
     <Pressable
+      {...a11yButton(`${label} ${fileLabel}`, {
+        hint: label === 'מחיקה' ? 'מוחק את הקובץ לצמיתות' : undefined,
+      })}
       style={({pressed}) => [styles.actionBtn, pressed && styles.actionPressed]}
       onPress={onPress}>
       <Text style={[styles.actionText, destructive && styles.actionDestructive]}>

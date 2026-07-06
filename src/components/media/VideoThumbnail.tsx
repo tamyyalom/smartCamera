@@ -6,11 +6,22 @@ import {toFileUri} from '../../services/media';
 interface VideoThumbnailProps {
   uri: string;
   durationLabel?: string;
+  accessibilityLabel?: string;
 }
 
-export function VideoThumbnail({uri, durationLabel}: VideoThumbnailProps) {
+export function VideoThumbnail({
+  uri,
+  durationLabel,
+  accessibilityLabel,
+}: VideoThumbnailProps) {
   return (
-    <View style={styles.wrap}>
+    <View
+      style={styles.wrap}
+      accessibilityRole="image"
+      accessibilityLabel={
+        accessibilityLabel ??
+        `תמונה ממוזערת לוידאו${durationLabel ? `, משך ${durationLabel}` : ''}`
+      }>
       <Video
         source={{uri: toFileUri(uri)}}
         style={styles.video}

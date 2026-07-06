@@ -1,6 +1,7 @@
 import React from 'react';
 import {Pressable, StyleSheet, Text, View} from 'react-native';
 import type {SceneProfile} from '../../types/scene';
+import {a11yButton} from '../../utils/accessibility';
 
 interface SceneCardProps {
   scene: SceneProfile;
@@ -14,9 +15,17 @@ export function SceneCard({scene, selected, onPress, testID}: SceneCardProps) {
   const zoomLabel = `${scene.framing.zoom_range[0]}×–${scene.framing.zoom_range[1]}×`;
   const primaryHint = scene.guidance_hints[0];
 
+  const accessibilityLabel = `${scene.name_he}, ${typeLabel}, זום ${zoomLabel}${
+    selected ? ', נבחרה' : ''
+  }`;
+
   return (
     <Pressable
       testID={testID}
+      {...a11yButton(accessibilityLabel, {
+        selected,
+        hint: primaryHint ?? scene.description_he,
+      })}
       style={[styles.card, selected && styles.cardSelected]}
       onPress={onPress}>
       <View style={styles.headerRow}>

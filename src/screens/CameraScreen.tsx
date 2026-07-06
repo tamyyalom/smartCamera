@@ -30,6 +30,7 @@ import {useAIPipeline} from '../hooks/useAIPipeline';
 import {useVideoRecorder} from '../hooks/useVideoRecorder';
 import {sceneUsesFaceGuide} from '../services/ai';
 import {useAppStore} from '../stores/useAppStore';
+import {a11yButton, a11yHeader} from '../utils/accessibility';
 import type {RootStackScreenProps} from '../types/navigation';
 
 const DEFAULT_MIN_ZOOM = 1;
@@ -222,16 +223,25 @@ export function CameraScreen({
   if (!hasAllPermissions) {
     return (
       <SafeAreaView testID="camera.screen" style={styles.permissionContainer}>
-        <Text style={styles.permissionTitle}>נדרשת הרשאת מצלמה</Text>
+        <Text style={styles.permissionTitle} {...a11yHeader('נדרשת הרשאת מצלמה')}>
+          נדרשת הרשאת מצלמה
+        </Text>
         <Text style={styles.permissionText}>
           {mode === 'video'
             ? 'לאפליקציה נדרשות הרשאות מצלמה ומיקרופון לצילום והקלטה.'
             : 'לאפליקציה נדרשת הרשאת מצלמה לצילום.'}
         </Text>
-        <Pressable style={styles.permissionBtn} onPress={requestAll}>
+        <Pressable
+          {...a11yButton('אפשר גישה למצלמה', {
+            hint: mode === 'video' ? 'כולל מצלמה ומיקרופון' : 'מצלמה בלבד',
+          })}
+          style={styles.permissionBtn}
+          onPress={requestAll}>
           <Text style={styles.permissionBtnText}>אפשר גישה</Text>
         </Pressable>
-        <Pressable onPress={() => navigation.goBack()}>
+        <Pressable
+          {...a11yButton('חזרה')}
+          onPress={() => navigation.goBack()}>
           <Text style={styles.backLink}>חזרה</Text>
         </Pressable>
       </SafeAreaView>
@@ -242,7 +252,9 @@ export function CameraScreen({
     return (
       <View testID="camera.screen" style={styles.center}>
         <ActivityIndicator size="large" color="#ffffff" />
-        <Text style={styles.loadingText}>טוען מצלמה...</Text>
+        <Text style={styles.loadingText} accessibilityLabel="טוען מצלמה">
+          טוען מצלמה...
+        </Text>
       </View>
     );
   }
@@ -276,17 +288,25 @@ export function CameraScreen({
         </View>
 
         <View style={styles.topBar}>
-          <Pressable onPress={handleBack}>
+          <Pressable
+            {...a11yButton('חזרה', {hint: 'חזרה למסך הקודם'})}
+            onPress={handleBack}>
             <Text style={styles.backText}>← חזרה</Text>
           </Pressable>
-          <View style={styles.badges}>
+          <View
+            style={styles.badges}
+            accessibilityLabel={`סצנה ${scene?.name_he ?? sceneId}, מצב ${modeLabel}${
+              tripodConnected ? ', חצובה מחוברת' : ''
+            }`}>
             <Text style={styles.sceneBadge}>{scene?.name_he ?? sceneId}</Text>
             <Text style={styles.modeBadge}>{modeLabel}</Text>
             {tripodConnected ? (
               <Text style={styles.tripodBadge}>חצובה ✓</Text>
             ) : null}
           </View>
-          <Pressable onPress={handleFinish}>
+          <Pressable
+            {...a11yButton('סיום', {hint: 'סיום הצילום וחזרה לבית'})}
+            onPress={handleFinish}>
             <Text style={styles.finishText}>סיום</Text>
           </Pressable>
         </View>
@@ -328,6 +348,10 @@ export function CameraScreen({
 
         <Pressable
           style={styles.settingsToggle}
+          {...a11yButton(
+            showControls ? 'הסתר הגדרות מצלמה' : 'הצג הגדרות מצלמה',
+            {hint: 'זום, חשיפה ואיפוס'},
+          )}
           onPress={() => setShowControls(v => !v)}>
           <Text style={styles.settingsText}>
             {showControls ? 'הסתר הגדרות' : 'הגדרות מצלמה'}

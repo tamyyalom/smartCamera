@@ -1,6 +1,7 @@
 import React from 'react';
 import {Pressable, StyleSheet, Text, View} from 'react-native';
 import type {TripodDevice} from '../../services/tripod';
+import {a11yButton} from '../../utils/accessibility';
 
 interface TripodDeviceRowProps {
   device: TripodDevice;
@@ -11,6 +12,13 @@ interface TripodDeviceRowProps {
 export function TripodDeviceRow({device, selected, onPress}: TripodDeviceRowProps) {
   return (
     <Pressable
+      {...a11yButton(`${device.name}, ${selected ? 'נבחר' : 'לא נבחר'}`, {
+        selected,
+        hint:
+          device.rssi != null
+            ? `עוצמת אות ${device.rssi} dBm`
+            : 'עוצמת אות לא זמינה',
+      })}
       style={[styles.row, selected && styles.rowSelected]}
       onPress={onPress}>
       <View style={styles.info}>

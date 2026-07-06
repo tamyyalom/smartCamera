@@ -1,6 +1,7 @@
 import React from 'react';
 import {ActivityIndicator, Pressable, StyleSheet, Text, View} from 'react-native';
 import type {RecordingPhase} from '../../hooks/useVideoRecorder';
+import {a11yButton} from '../../utils/accessibility';
 
 interface RecordingControlsProps {
   phase: RecordingPhase;
@@ -58,6 +59,7 @@ export function RecordingControls({
               destructive
             />
             <Pressable
+              {...a11yButton('עצור הקלטה', {disabled: isBusy})}
               style={[styles.shutter, styles.shutterStop, isBusy && styles.disabled]}
               onPress={onStop}
               disabled={isBusy}>
@@ -89,6 +91,7 @@ export function RecordingControls({
           </>
         ) : (
           <Pressable
+            {...a11yButton('התחל הקלטה', {disabled: isBusy})}
             style={[styles.shutter, isBusy && styles.disabled]}
             onPress={onStart}
             disabled={isBusy}>
@@ -125,6 +128,7 @@ function ActionButton({
 }) {
   return (
     <Pressable
+      {...a11yButton(label, {disabled, hint: destructive ? 'מבטל את ההקלטה' : undefined})}
       style={[styles.actionBtn, disabled && styles.disabled]}
       onPress={onPress}
       disabled={disabled}>

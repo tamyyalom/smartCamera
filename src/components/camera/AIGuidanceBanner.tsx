@@ -12,7 +12,12 @@ export function AIGuidanceBanner({text, isThinking}: AIGuidanceBannerProps) {
   }
 
   return (
-    <View style={styles.wrap} testID="camera.aiGuidance">
+    <View
+      style={styles.wrap}
+      testID="camera.aiGuidance"
+      accessibilityRole="text"
+      accessibilityLabel={text ?? 'מנתח קומפוזיציה'}
+      accessibilityLiveRegion="polite">
       {isThinking ? (
         <ActivityIndicator color="#93c5fd" size="small" style={styles.spinner} />
       ) : null}

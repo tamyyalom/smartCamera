@@ -1,5 +1,6 @@
 import React from 'react';
 import {StyleSheet, Text, View} from 'react-native';
+import {a11yProgress, flowProgressLabel} from '../../utils/accessibility';
 
 export const FLOW_STEPS = [
   {step: 1, label: 'בית'},
@@ -20,9 +21,15 @@ export function FlowProgress({
   variant = 'light',
 }: FlowProgressProps) {
   const dark = variant === 'dark';
+  const current = FLOW_STEPS.find(item => item.step === currentStep);
 
   return (
-    <View style={styles.container}>
+    <View
+      style={styles.container}
+      {...a11yProgress(
+        flowProgressLabel(currentStep, current?.label ?? ''),
+        {now: currentStep, max: 4},
+      )}>
       {FLOW_STEPS.map((item, index) => {
         const active = item.step === currentStep;
         const done = item.step < currentStep;
