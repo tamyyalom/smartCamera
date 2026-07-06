@@ -45,10 +45,12 @@ module.exports = {
     'ios.sim.debug': {
       device: 'simulator',
       app: 'ios.debug',
+      start: 'react-native start',
     },
     'android.emu.debug': {
       device: 'emulator',
       app: 'android.debug',
+      start: 'react-native start',
     },
   },
 };

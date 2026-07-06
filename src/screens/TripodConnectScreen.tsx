@@ -42,8 +42,8 @@ export function TripodConnectScreen({
     navigation.navigate('Camera', {sceneId, mode});
   };
 
-  const skipWithoutTripod = async () => {
-    await tripod.disconnect();
+  const skipWithoutTripod = () => {
+    void tripod.disconnect();
     setTripodConnected(false);
     continueToCamera();
   };

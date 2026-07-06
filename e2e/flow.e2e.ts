@@ -22,7 +22,10 @@ describe('SmartCamera flow', () => {
   });
 
   it('can skip tripod and reach camera permission gate', async () => {
-    await device.launchApp({newInstance: true});
+    await device.launchApp({
+      newInstance: true,
+      permissions: {camera: 'unset'},
+    });
     await waitFor(element(by.id('home.screen'))).toBeVisible().withTimeout(5000);
     await element(by.id('home.startPhoto')).tap();
     await waitFor(element(by.id('sceneSelect.screen'))).toBeVisible().withTimeout(3000);
@@ -36,9 +39,13 @@ describe('SmartCamera flow', () => {
       .toBeVisible()
       .withTimeout(3000);
 
-    await element(by.id('tripodConnect.skip')).tap();
-    await waitFor(element(by.id('camera.screen')))
+    await waitFor(element(by.id('tripodConnect.skip')))
       .toBeVisible()
-      .withTimeout(5000);
+      .withTimeout(3000);
+    await element(by.id('tripodConnect.skip')).tap();
+    await waitFor(element(by.text('נדרשת הרשאת מצלמה')))
+      .toBeVisible()
+      .withTimeout(10000);
+    await expect(element(by.id('camera.screen'))).toBeVisible();
   });
 });

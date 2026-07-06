@@ -39,10 +39,65 @@ const DEFAULT_MAX_ZOOM = 10;
 const DEFAULT_MIN_EXPOSURE = -2;
 const DEFAULT_MAX_EXPOSURE = 2;
 
-export function CameraScreen({
+type CameraRouteProps = RootStackScreenProps<'Camera'>;
+
+function CameraPermissionGate({
+  mode,
   navigation,
-  route,
-}: RootStackScreenProps<'Camera'>) {
+  requestAll,
+}: {
+  mode: 'photo' | 'video';
+  navigation: CameraRouteProps['navigation'];
+  requestAll: () => Promise<boolean>;
+}) {
+  return (
+    <SafeAreaView
+      testID="camera.screen"
+      accessibilityLabel="camera.permissionGate"
+      style={styles.permissionContainer}>
+      <Text style={styles.permissionTitle} {...a11yHeader('נדרשת הרשאת מצלמה')}>
+        נדרשת הרשאת מצלמה
+      </Text>
+      <Text style={styles.permissionText}>
+        {mode === 'video'
+          ? 'לאפליקציה נדרשות הרשאות מצלמה ומיקרופון לצילום והקלטה.'
+          : 'לאפליקציה נדרשת הרשאת מצלמה לצילום.'}
+      </Text>
+      <Pressable
+        {...a11yButton('אפשר גישה למצלמה', {
+          hint: mode === 'video' ? 'כולל מצלמה ומיקרופון' : 'מצלמה בלבד',
+        })}
+        style={styles.permissionBtn}
+        onPress={requestAll}>
+        <Text style={styles.permissionBtnText}>אפשר גישה</Text>
+      </Pressable>
+      <Pressable
+        {...a11yButton('חזרה')}
+        onPress={() => navigation.goBack()}>
+        <Text style={styles.backLink}>חזרה</Text>
+      </Pressable>
+    </SafeAreaView>
+  );
+}
+
+export function CameraScreen({navigation, route}: CameraRouteProps) {
+  const {mode} = route.params;
+  const {hasAllPermissions, requestAll} = useCameraPermissions(mode === 'video');
+
+  if (!hasAllPermissions) {
+    return (
+      <CameraPermissionGate
+        mode={mode}
+        navigation={navigation}
+        requestAll={requestAll}
+      />
+    );
+  }
+
+  return <CameraSession navigation={navigation} route={route} />;
+}
+
+function CameraSession({navigation, route}: CameraRouteProps) {
   const {sceneId, mode} = route.params;
   const scene = getSceneProfile(sceneId);
   const modeLabel = mode === 'video' ? 'הקלטה' : 'צילום';
@@ -54,7 +109,6 @@ export function CameraScreen({
 
   const enableFaceGuide = sceneUsesFaceGuide(scene);
 
-  const {hasAllPermissions, requestAll} = useCameraPermissions(mode === 'video');
   const {status: cameraStatus, device} = useCameraDeviceStatus();
   const photoOutput = usePhotoOutput();
   const videoOutput = useVideoOutput({enableAudio: mode === 'video'});
@@ -140,21 +194,13 @@ export function CameraScreen({
 
   const aiPipeline = useAIPipeline({
     sceneId,
-    enabled:
-      isFocused &&
-      hasAllPermissions &&
-      cameraStatus === 'ready' &&
-      !!device,
+    enabled: isFocused && cameraStatus === 'ready' && !!device,
     onZoomChange: handleZoomChange,
   });
 
   const guidanceSpeech = useGuidanceSpeech({
     guidanceText: aiPipeline.guidanceText,
-    enabled:
-      isFocused &&
-      hasAllPermissions &&
-      cameraStatus === 'ready' &&
-      !!device,
+    enabled: isFocused && cameraStatus === 'ready' && !!device,
   });
 
   const handleExposureChange = (value: number) => {
@@ -230,34 +276,6 @@ export function CameraScreen({
 
   const guidanceHint = scene?.guidance_hints[0];
 
-  if (!hasAllPermissions) {
-    return (
-      <SafeAreaView testID="camera.screen" style={styles.permissionContainer}>
-        <Text style={styles.permissionTitle} {...a11yHeader('נדרשת הרשאת מצלמה')}>
-          נדרשת הרשאת מצלמה
-        </Text>
-        <Text style={styles.permissionText}>
-          {mode === 'video'
-            ? 'לאפליקציה נדרשות הרשאות מצלמה ומיקרופון לצילום והקלטה.'
-            : 'לאפליקציה נדרשת הרשאת מצלמה לצילום.'}
-        </Text>
-        <Pressable
-          {...a11yButton('אפשר גישה למצלמה', {
-            hint: mode === 'video' ? 'כולל מצלמה ומיקרופון' : 'מצלמה בלבד',
-          })}
-          style={styles.permissionBtn}
-          onPress={requestAll}>
-          <Text style={styles.permissionBtnText}>אפשר גישה</Text>
-        </Pressable>
-        <Pressable
-          {...a11yButton('חזרה')}
-          onPress={() => navigation.goBack()}>
-          <Text style={styles.backLink}>חזרה</Text>
-        </Pressable>
-      </SafeAreaView>
-    );
-  }
-
   if (cameraStatus === 'loading') {
     return (
       <View testID="camera.screen" style={styles.center}>
@@ -284,7 +302,7 @@ export function CameraScreen({
         ref={cameraRef}
         style={StyleSheet.absoluteFill}
         device={device}
-        isActive={isFocused && hasAllPermissions}
+        isActive={isFocused}
         outputs={face.camera.outputs}
         zoom={zoom}
         exposure={exposure}

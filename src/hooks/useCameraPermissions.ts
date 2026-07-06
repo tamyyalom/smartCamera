@@ -1,4 +1,4 @@
-import {useCallback, useEffect} from 'react';
+import {useCallback} from 'react';
 import {
   useCameraPermission,
   useMicrophonePermission,
@@ -30,22 +30,6 @@ export function useCameraPermissions(requireMicrophone: boolean) {
       : await requestMicrophonePermission();
 
     return cameraGranted && micGranted;
-  }, [
-    hasCameraPermission,
-    hasMicrophonePermission,
-    requestCameraPermission,
-    requestMicrophonePermission,
-    requireMicrophone,
-  ]);
-
-  useEffect(() => {
-    if (!hasCameraPermission) {
-      requestCameraPermission();
-      return;
-    }
-    if (requireMicrophone && !hasMicrophonePermission) {
-      requestMicrophonePermission();
-    }
   }, [
     hasCameraPermission,
     hasMicrophonePermission,
