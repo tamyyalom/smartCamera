@@ -81,4 +81,6 @@ jest.mock('react-native-share', () => ({
 jest.mock('react-native-video', () => 'Video');
 
 jest.mock('react-native-nitro-modules', () => ({}));
-jest.mock('react-native-nitro-image', () => ({}));
+jest.mock('react-native-nitro-image', () => ({
+  loadImage: jest.fn(),
+}));

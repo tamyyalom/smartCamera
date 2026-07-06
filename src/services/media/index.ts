@@ -15,3 +15,13 @@ export {
   persistCapture,
   type PersistCaptureResult,
 } from './persistCapture';
+export {
+  type CropMode,
+  editedFilename,
+  getCenterCropRect,
+  getSquareCenterCropRect,
+  hasPhotoEdits,
+  normalizeFilePath,
+  normalizeRotationDegrees,
+} from './imageEditing';
+export {renderEditedPhoto, saveEditedPhotoCopy} from './photoEditor';
