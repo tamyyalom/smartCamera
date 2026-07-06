@@ -7,6 +7,9 @@ on:
     paths:
       - 'src/**'
       - 'e2e/**'
+      - 'scripts/install-detox-ios.sh'
+      - 'scripts/check-detox-ios.sh'
+      - '.github/workflows/e2e-ios.yml'
       - '.detoxrc.js'
       - 'ios/**'
       - 'package.json'
