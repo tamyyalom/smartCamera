@@ -2168,6 +2168,8 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - TextToSpeech (4.1.1):
+    - React-Core
   - VisionCamera (5.1.0):
     - hermes-engine
     - NitroImage
@@ -2282,6 +2284,7 @@ DEPENDENCIES:
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
   - RNScreens (from `../node_modules/react-native-screens`)
   - RNShare (from `../node_modules/react-native-share`)
+  - TextToSpeech (from `../node_modules/react-native-tts`)
   - VisionCamera (from `../node_modules/react-native-vision-camera`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
@@ -2461,6 +2464,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-screens"
   RNShare:
     :path: "../node_modules/react-native-share"
+  TextToSpeech:
+    :path: "../node_modules/react-native-tts"
   VisionCamera:
     :path: "../node_modules/react-native-vision-camera"
   Yoga:
@@ -2553,6 +2558,7 @@ SPEC CHECKSUMS:
   RNGestureHandler: ef19613372e4c87374fe9494862e366d82d1852c
   RNScreens: 032083414633a4d94cbcf08f8ab5019d72d1ba36
   RNShare: 43cee010ada075019148c7a6bac1ca71b074e1d7
+  TextToSpeech: 2b930ec3756afde499061f4f01ea895e1f75dccb
   VisionCamera: 73a21a8ed0feecd7c579d79ae25eaf8c3e63c767
   Yoga: 94172d87dd5d83fc929bf1ee53121b5d4490b5f2
 

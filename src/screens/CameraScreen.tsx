@@ -27,6 +27,7 @@ import {useCameraDeviceStatus} from '../hooks/useCameraDeviceStatus';
 import {useCameraPermissions} from '../hooks/useCameraPermissions';
 import {usePhotoCapture} from '../hooks/usePhotoCapture';
 import {useAIPipeline} from '../hooks/useAIPipeline';
+import {useGuidanceSpeech} from '../hooks/useGuidanceSpeech';
 import {useVideoRecorder} from '../hooks/useVideoRecorder';
 import {sceneUsesFaceGuide} from '../services/ai';
 import {useAppStore} from '../stores/useAppStore';
@@ -145,6 +146,15 @@ export function CameraScreen({
       cameraStatus === 'ready' &&
       !!device,
     onZoomChange: handleZoomChange,
+  });
+
+  const guidanceSpeech = useGuidanceSpeech({
+    guidanceText: aiPipeline.guidanceText,
+    enabled:
+      isFocused &&
+      hasAllPermissions &&
+      cameraStatus === 'ready' &&
+      !!device,
   });
 
   const handleExposureChange = (value: number) => {
@@ -346,17 +356,32 @@ export function CameraScreen({
           </View>
         )}
 
-        <Pressable
-          style={styles.settingsToggle}
-          {...a11yButton(
-            showControls ? 'הסתר הגדרות מצלמה' : 'הצג הגדרות מצלמה',
-            {hint: 'זום, חשיפה ואיפוס'},
-          )}
-          onPress={() => setShowControls(v => !v)}>
-          <Text style={styles.settingsText}>
-            {showControls ? 'הסתר הגדרות' : 'הגדרות מצלמה'}
-          </Text>
-        </Pressable>
+        <View style={styles.quickToggles}>
+          <Pressable
+            style={styles.settingsToggle}
+            {...a11yButton(
+              guidanceSpeech.voiceEnabled
+                ? 'השתק הנחיות קוליות'
+                : 'הפעל הנחיות קוליות',
+            )}
+            onPress={guidanceSpeech.toggleVoice}>
+            <Text style={styles.settingsText}>
+              {guidanceSpeech.voiceEnabled ? '🔊 הנחיה קולית' : '🔇 הנחיה קולית'}
+            </Text>
+          </Pressable>
+
+          <Pressable
+            style={styles.settingsToggle}
+            {...a11yButton(
+              showControls ? 'הסתר הגדרות מצלמה' : 'הצג הגדרות מצלמה',
+              {hint: 'זום, חשיפה ואיפוס'},
+            )}
+            onPress={() => setShowControls(v => !v)}>
+            <Text style={styles.settingsText}>
+              {showControls ? 'הסתר הגדרות' : 'הגדרות מצלמה'}
+            </Text>
+          </Pressable>
+        </View>
 
         <View style={styles.bottomBar}>
           {mode === 'video' ? (
@@ -442,9 +467,14 @@ const styles = StyleSheet.create({
     writingDirection: 'rtl',
   },
   settingsToggle: {
-    alignSelf: 'center',
     paddingVertical: 6,
     paddingHorizontal: 12,
+  },
+  quickToggles: {
+    flexDirection: 'row-reverse',
+    justifyContent: 'center',
+    gap: 8,
+    flexWrap: 'wrap',
   },
   settingsText: {
     color: '#60a5fa',

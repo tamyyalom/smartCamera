@@ -84,3 +84,17 @@ jest.mock('react-native-nitro-modules', () => ({}));
 jest.mock('react-native-nitro-image', () => ({
   loadImage: jest.fn(),
 }));
+
+jest.mock('react-native-tts', () => ({
+  __esModule: true,
+  default: {
+    getInitStatus: jest.fn(() => Promise.resolve('success')),
+    setDefaultLanguage: jest.fn(() => Promise.resolve()),
+    setDefaultRate: jest.fn(() => Promise.resolve()),
+    setDefaultVoice: jest.fn(() => Promise.resolve()),
+    setDucking: jest.fn(),
+    speak: jest.fn(() => Promise.resolve('utterance-1')),
+    stop: jest.fn(() => Promise.resolve()),
+    requestInstallEngine: jest.fn(),
+  },
+}));
