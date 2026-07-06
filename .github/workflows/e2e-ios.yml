@@ -1,0 +1,51 @@
+name: E2E iOS
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'e2e/**'
+      - '.detoxrc.js'
+      - 'ios/**'
+      - 'package.json'
+      - 'package-lock.json'
+
+concurrency:
+  group: e2e-ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  detox-ios:
+    name: Detox iOS Simulator
+    runs-on: macos-15
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install JS dependencies
+        run: npm ci
+
+      - name: Install Detox iOS tools
+        run: bash scripts/install-detox-ios.sh
+
+      - name: Install CocoaPods
+        run: |
+          cd ios
+          bundle install
+          bundle exec pod install
+
+      - name: Build app for Detox
+        run: npm run detox:build:ios
+
+      - name: Run Detox E2E
+        run: npm run detox:test:ios
